@@ -1,7 +1,6 @@
 package org.by1337.bvault.core.util;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
 import org.by1337.blib.util.Pair;
@@ -28,13 +27,12 @@ public class CachedMap<K, V> {
     private final Map<K, V> source = new HashMap<>();
     // A map that stores the removal time and value pairs for the keys.
     private final Map<K, Pair<Long, V>> removeMap = new HashMap<>();
-    // The duration for which an entry should be stored in milliseconds.
-    private final long storeTime;
     // The Bukkit task that periodically checks and removes expired entries.
     private final BukkitTask task;
     // Callback to be executed when an entry is removed.
     private Consumer<Pair<K, V>> removeCallBack;
-
+    private long ticks = 0;
+    private final long cashLifeTime;
     /**
      * Constructs a CachedMap with a specified duration and plugin.
      *
@@ -42,15 +40,15 @@ public class CachedMap<K, V> {
      * @param timeUnit  The time unit of the storeTime parameter.
      * @param plugin    The plugin instance.
      */
-    public CachedMap(long storeTime, TimeUnit timeUnit, Plugin plugin) {
-        this.storeTime = timeUnit.toMillis(storeTime);
-        task = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, () -> {
+    public CachedMap(long storeTime, TimeUnit timeUnit, Plugin plugin, long tickSpeed) {
+        cashLifeTime =  timeUnit.toMillis(storeTime) / 50;
+        task = plugin.getServer().getScheduler().runTaskTimerAsynchronously(plugin, () -> {
             synchronized (lock) {
+                ticks += tickSpeed;
                 var iterator = removeMap.entrySet().iterator();
-                long currentTime = System.currentTimeMillis();
                 while (iterator.hasNext()) {
                     var entry = iterator.next();
-                    if (entry.getValue().getLeft() <= currentTime) {
+                    if (entry.getValue().getLeft() <= ticks) {
                         iterator.remove();
                         source.remove(entry.getKey());
                         if (removeCallBack != null) {
@@ -59,7 +57,7 @@ public class CachedMap<K, V> {
                     }
                 }
             }
-        }, 0, storeTime / 50);
+        }, 0, tickSpeed);
     }
 
     /**
@@ -73,7 +71,7 @@ public class CachedMap<K, V> {
     public V put(K k, V v) {
         synchronized (lock) {
             V res = source.put(k, v);
-            removeMap.put(k, Pair.of(System.currentTimeMillis() + storeTime, v));
+            removeMap.put(k, Pair.of(ticks + cashLifeTime, v));
             return res;
         }
     }
@@ -89,7 +87,7 @@ public class CachedMap<K, V> {
         synchronized (lock) {
             V v = source.get(k);
             if (v != null) {
-                removeMap.put(k, Pair.of(System.currentTimeMillis() + storeTime, v));
+                removeMap.put(k, Pair.of(ticks + cashLifeTime, v));
             }
             return v;
         }
@@ -103,10 +101,12 @@ public class CachedMap<K, V> {
      * @return The current (existing or computed) value associated with the key.
      */
     public V computeIfAbsent(K k, Function<K, V> creator) {
-        if (!containsKey(k)) {
-            return put(k, creator.apply(k));
+        V v = get(k);
+        if (v == null) {
+            v = creator.apply(k);
+            put(k, v);
         }
-        return get(k);
+        return v;
     }
 
     /**

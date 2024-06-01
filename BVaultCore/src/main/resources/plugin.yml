@@ -7,3 +7,8 @@ authors: [ By1337 ]
 
 softdepend:
   - Vault
+
+commands:
+  bvault:
+    aliases:
+      - bv

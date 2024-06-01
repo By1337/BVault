@@ -2,6 +2,7 @@ package org.by1337.bvault.core.db;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -36,23 +37,33 @@ public class FileDataBase implements DataBase, Listener {
     private final ExecutorService ioExecutor;
 
     public FileDataBase(File dataFolder, Plugin plugin) {
+        if (!dataFolder.exists()){
+            dataFolder.mkdirs();
+        }
         this.dataFolder = dataFolder;
         this.plugin = plugin;
         ioThreadFactory = new ThreadFactoryBuilder().setNameFormat("BVault IO #%d").build();
         ioExecutor = Executors.newCachedThreadPool(ioThreadFactory);
 
-        editCash = new CachedMap<>(5, TimeUnit.MINUTES, plugin);
-        userCash2 = new CachedMap<>(5, TimeUnit.MINUTES, plugin);
+        editCash = new CachedMap<>(5, TimeUnit.MINUTES, plugin, 60 * 20);
+        userCash2 = new CachedMap<>(5, TimeUnit.MINUTES, plugin, 60 * 20);
 
         userCash2.onRemove(pair -> {
             if (Bukkit.getPlayer(pair.getLeft()) != null) {
                 userCash2.put(pair.getKey(), pair.getRight());
             }
         });
-
         editCash.onRemove(pair -> CompletableFuture.runAsync(() -> {
             save(pair.getValue());
         }, ioExecutor));
+
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            getUser(player.getUniqueId()).whenComplete((u, t) -> {
+                if (t != null) {
+                    plugin.getLogger().log(Level.SEVERE, "Failed to load user", t);
+                }
+            });
+        }
     }
 
 
@@ -76,6 +87,7 @@ public class FileDataBase implements DataBase, Listener {
 
     private void save(CompoundTag compoundTag) {
         try {
+            System.out.println("save " + compoundTag.getAsUUID("uuid"));
             File file = new File(dataFolder, compoundTag.getAsUUID("uuid").toString() + ".bnbt");
             DefaultNbtByteBuffer defaultNbtByteBuffer = new DefaultNbtByteBuffer();
             compoundTag.write(defaultNbtByteBuffer);
