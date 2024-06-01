@@ -1,0 +1,9 @@
+name: BVaultCore
+version: '${project.version}'
+main: org.by1337.bvault.core.BVaultCore
+api-version: '1.16'
+depend: [ BLib, PlaceholderAPI ]
+authors: [ By1337 ]
+
+softdepend:
+  - Vault
