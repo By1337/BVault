@@ -1,8 +1,10 @@
 package org.by1337.bvault.core;
 
+import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.by1337.blib.chat.util.Message;
@@ -11,9 +13,11 @@ import org.by1337.blib.command.CommandException;
 import org.by1337.blib.command.argument.ArgumentIntegerAllowedMath;
 import org.by1337.blib.command.argument.ArgumentPlayer;
 import org.by1337.blib.command.argument.ArgumentString;
+import org.by1337.blib.command.requires.RequiresPermission;
 import org.by1337.bvault.api.BEconomy;
 import org.by1337.bvault.core.db.DataBase;
 import org.by1337.bvault.core.db.FileDataBase;
+import org.by1337.bvault.core.hook.DefaultVaultEconomyAdapter;
 import org.by1337.bvault.core.impl.BEconomyImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +28,6 @@ import java.util.logging.Level;
 
 public class BVaultCore extends JavaPlugin {
     private DataBase dataBase;
-    private BEconomyImpl bEconomy;
     private Command<CommandSender> command;
     private Message message;
 
@@ -33,20 +36,28 @@ public class BVaultCore extends JavaPlugin {
         message = new Message(getLogger());
     }
 
+    private BEconomy getEconomy() {
+        RegisteredServiceProvider<BEconomy> provider = Bukkit.getServicesManager().getRegistration(BEconomy.class);
+        return provider.getProvider();
+    }
+
     @Override
     public void onEnable() {
         dataBase = new FileDataBase(new File(getDataFolder(), "data"), this);
-        bEconomy = new BEconomyImpl(dataBase);
+        BEconomy bEconomy = new BEconomyImpl(dataBase);
         Bukkit.getServicesManager().register(BEconomy.class, bEconomy, this, ServicePriority.Lowest);
+        Bukkit.getServicesManager().register(Economy.class, new DefaultVaultEconomyAdapter(bEconomy), this, ServicePriority.High);
 
         command = new Command<CommandSender>("root")
+                .requires(new RequiresPermission<>("bvault.use"))
                 .addSubCommand(new Command<CommandSender>("balance")
+                        .requires(new RequiresPermission<>("bvault.balance"))
                         .argument(new ArgumentPlayer<>("player"))
                         .argument(new ArgumentString<>("bank", List.of(BEconomy.DEFAULT_BANK)))
                         .executor(((sender, args) -> {
                             Player player = (Player) args.getOrThrow("player", "Use: /bv balance <player> <bank>");
                             String bank = (String) args.getOrDefault("bank", BEconomy.DEFAULT_BANK);
-                            bEconomy.getBalance(bank, player.getUniqueId()).whenComplete((d, t) -> {
+                            getEconomy().getBalance(bank, player.getUniqueId()).whenComplete((d, t) -> {
                                 if (t != null) {
                                     message.error(t);
                                 }
@@ -65,6 +76,7 @@ public class BVaultCore extends JavaPlugin {
                         }))
                 )
                 .addSubCommand(new Command<CommandSender>("give")
+                        .requires(new RequiresPermission<>("bvault.give"))
                         .argument(new ArgumentPlayer<>("player"))
                         .argument(new ArgumentString<>("bank", List.of(BEconomy.DEFAULT_BANK)))
                         .argument(new ArgumentIntegerAllowedMath<>("count", List.of("100", "1k", "1kk"), 0))
@@ -73,7 +85,7 @@ public class BVaultCore extends JavaPlugin {
                             String bank = (String) args.getOrDefault("bank", BEconomy.DEFAULT_BANK);
                             int count = (int) args.getOrThrow("count", "Use: /bv give <player> <bank> <count>");
 
-                            bEconomy.deposit(bank, player.getUniqueId(), count).whenComplete((d, t) -> {
+                            getEconomy().deposit(bank, player.getUniqueId(), count).whenComplete((d, t) -> {
                                 if (t != null) {
                                     message.error(t);
                                 }
@@ -93,6 +105,7 @@ public class BVaultCore extends JavaPlugin {
                         }))
                 )
                 .addSubCommand(new Command<CommandSender>("take")
+                        .requires(new RequiresPermission<>("bvault.take"))
                         .argument(new ArgumentPlayer<>("player"))
                         .argument(new ArgumentString<>("bank", List.of(BEconomy.DEFAULT_BANK)))
                         .argument(new ArgumentIntegerAllowedMath<>("count", List.of("100", "1k", "1kk"), 0))
@@ -101,7 +114,7 @@ public class BVaultCore extends JavaPlugin {
                             String bank = (String) args.getOrDefault("bank", BEconomy.DEFAULT_BANK);
                             int count = (int) args.getOrThrow("count", "Use: /bv take <player> <bank> <count>");
 
-                            bEconomy.withdraw(bank, player.getUniqueId(), count).whenComplete((d, t) -> {
+                            getEconomy().withdraw(bank, player.getUniqueId(), count).whenComplete((d, t) -> {
                                 if (t != null) {
                                     message.error(t);
                                 }
@@ -118,6 +131,12 @@ public class BVaultCore extends JavaPlugin {
                                 }
                             });
 
+                        }))
+                )
+                .addSubCommand(new Command<CommandSender>("ecoName")
+                        .requires(new RequiresPermission<>("bvault.ecoName"))
+                        .executor(((sender, args) -> {
+                           message.sendMsg(sender, "Текущий поставщик экономики '%s'", getEconomy().getName());
                         }))
                 )
         ;

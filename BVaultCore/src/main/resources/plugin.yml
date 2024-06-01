@@ -1,4 +1,4 @@
-name: BVaultCore
+name: BVault
 version: '${project.version}'
 main: org.by1337.bvault.core.BVaultCore
 api-version: '1.16'
@@ -10,5 +10,10 @@ softdepend:
 
 commands:
   bvault:
+    permission: bvault.use
     aliases:
       - bv
+
+permissions:
+  bvault.*:
+    default: op
