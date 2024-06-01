@@ -27,7 +27,6 @@ class CachedMapTest {
     private Plugin plugin;
     @Mock
     private Server server;
-
     @Mock
     private BukkitScheduler scheduler;
     @Mock
@@ -85,6 +84,18 @@ class CachedMapTest {
 
     @Test
     void testExpiration() {
+        cachedMap.put("key1", "value1");
+        assertEquals("value1", cachedMap.get("key1"));
+        tick(10);
+        assertNotNull(cachedMap.get("key1"));
+        tick(10);
+        assertNotNull(cachedMap.get("key1"));
+        tick(21);
+        assertNull(cachedMap.get("key1"));
+    }
+    @Test
+    void testExpiration2() {
+        tick(100);
         cachedMap.put("key1", "value1");
         assertEquals("value1", cachedMap.get("key1"));
         tick(10);

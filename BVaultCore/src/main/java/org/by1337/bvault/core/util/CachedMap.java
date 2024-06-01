@@ -4,6 +4,7 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
 import org.by1337.blib.util.Pair;
+import org.by1337.bvault.api.Validate;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -41,10 +42,11 @@ public class CachedMap<K, V> {
      * @param plugin    The plugin instance.
      */
     public CachedMap(long storeTime, TimeUnit timeUnit, Plugin plugin, long tickSpeed) {
-        cashLifeTime =  timeUnit.toMillis(storeTime) / 50;
+        cashLifeTime = (timeUnit.toMillis(storeTime) / 50) / tickSpeed;
+        Validate.assertPositive(cashLifeTime, "storeTime must be greater than tickSpeed!");
         task = plugin.getServer().getScheduler().runTaskTimerAsynchronously(plugin, () -> {
             synchronized (lock) {
-                ticks += tickSpeed;
+                ticks++;
                 var iterator = removeMap.entrySet().iterator();
                 while (iterator.hasNext()) {
                     var entry = iterator.next();
@@ -187,5 +189,8 @@ public class CachedMap<K, V> {
      */
     public void close() {
         task.cancel();
+    }
+    public boolean isEmpty(){
+        return source.isEmpty();
     }
 }

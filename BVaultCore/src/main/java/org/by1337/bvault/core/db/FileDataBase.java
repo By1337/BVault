@@ -16,6 +16,7 @@ import org.by1337.blib.nbt.impl.CompoundTag;
 import org.by1337.blib.nbt.impl.DoubleNBT;
 import org.by1337.bvault.core.util.CachedMap;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,14 +31,17 @@ public class FileDataBase implements DataBase, Listener {
     private final Object lock = new Object();
     private final File dataFolder;
     private final Plugin plugin;
-    private final CachedMap<UUID, CompoundTag> editCash;
-    private final CachedMap<UUID, User> userCash2;
-    private final Map<UUID, User> userCash = new HashMap<>();
+    @VisibleForTesting
+    final CachedMap<UUID, CompoundTag> editCash;
+    @VisibleForTesting
+    final CachedMap<UUID, User> userCash2;
+    @VisibleForTesting
+    final Map<UUID, User> userCash = new HashMap<>();
     private final ThreadFactory ioThreadFactory;
     private final ExecutorService ioExecutor;
 
     public FileDataBase(File dataFolder, Plugin plugin) {
-        if (!dataFolder.exists()){
+        if (!dataFolder.exists()) {
             dataFolder.mkdirs();
         }
         this.dataFolder = dataFolder;
@@ -49,7 +53,7 @@ public class FileDataBase implements DataBase, Listener {
         userCash2 = new CachedMap<>(5, TimeUnit.MINUTES, plugin, 60 * 20);
 
         userCash2.onRemove(pair -> {
-            if (Bukkit.getPlayer(pair.getLeft()) != null) {
+            if (plugin.getServer().getPlayer(pair.getLeft()) != null) {
                 userCash2.put(pair.getKey(), pair.getRight());
             }
         });
@@ -57,13 +61,15 @@ public class FileDataBase implements DataBase, Listener {
             save(pair.getValue());
         }, ioExecutor));
 
-        for (Player player : Bukkit.getOnlinePlayers()) {
+
+        for (Player player : plugin.getServer().getOnlinePlayers()) {
             getUser(player.getUniqueId()).whenComplete((u, t) -> {
                 if (t != null) {
                     plugin.getLogger().log(Level.SEVERE, "Failed to load user", t);
                 }
             });
         }
+        plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
 
@@ -87,7 +93,6 @@ public class FileDataBase implements DataBase, Listener {
 
     private void save(CompoundTag compoundTag) {
         try {
-            System.out.println("save " + compoundTag.getAsUUID("uuid"));
             File file = new File(dataFolder, compoundTag.getAsUUID("uuid").toString() + ".bnbt");
             DefaultNbtByteBuffer defaultNbtByteBuffer = new DefaultNbtByteBuffer();
             compoundTag.write(defaultNbtByteBuffer);
@@ -105,7 +110,7 @@ public class FileDataBase implements DataBase, Listener {
         } else {
             user = new User(uuid, this);
         }
-        if (Bukkit.getPlayer(user.getUuid()) != null) {
+        if (plugin.getServer().getPlayer(user.getUuid()) != null) {
             userCash.put(uuid, user);
         } else {
             userCash2.put(uuid, user);
@@ -141,19 +146,20 @@ public class FileDataBase implements DataBase, Listener {
         }
     }
 
-
     @Override
     public void flushUser(User user, String bank) {
-        synchronized (lock) {
-            CompoundTag nbt = editCash.computeIfAbsent(user.getUuid(), k -> {
-                var v = loadFromFile(k);
-                if (v != null) return v;
-                v = new CompoundTag();
-                v.putUUID("uuid", k);
-                return v;
-            });
-            nbt.computeIfAbsent("balances", CompoundTag::new).putDouble(bank, user.getBalance(bank));
-        }
+        ioExecutor.execute(() -> {
+            synchronized (lock) {
+                CompoundTag nbt = editCash.computeIfAbsent(user.getUuid(), k -> {
+                    var v = loadFromFile(k);
+                    if (v != null) return v;
+                    v = new CompoundTag();
+                    v.putUUID("uuid", k);
+                    return v;
+                });
+                nbt.computeIfAbsent("balances", CompoundTag::new).putDouble(bank, user.getBalance(bank));
+            }
+        });
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
