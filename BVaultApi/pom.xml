@@ -13,9 +13,36 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <distributionManagement>
+        <repository>
+            <id>by1337.repo.2</id>
+            <name>releases</name>
+            <url>https://repo.by1337.space/repository/maven-releases/</url>
+        </repository>
+        <snapshotRepository>
+            <id>by1337.repo.2</id>
+            <name>snapshots</name>
+            <url>https://repo.by1337.space/repository/maven-snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
+
     <build>
         <defaultGoal>clean install</defaultGoal>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.3.0</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>

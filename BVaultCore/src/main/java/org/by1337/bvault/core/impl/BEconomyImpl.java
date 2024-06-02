@@ -1,6 +1,5 @@
 package org.by1337.bvault.core.impl;
 
-import org.by1337.blib.util.Pair;
 import org.by1337.bvault.api.BEconomy;
 import org.by1337.bvault.core.db.DataBase;
 import org.jetbrains.annotations.NotNull;

@@ -2,7 +2,6 @@ package org.by1337.bvault.core.db;
 
 import com.zaxxer.hikari.HikariConfig;
 import org.bukkit.plugin.Plugin;
-import org.by1337.blib.configuration.YamlContext;
 
 import java.io.File;
 import java.sql.Connection;

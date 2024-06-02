@@ -10,7 +10,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
-import org.by1337.blib.configuration.YamlContext;
 import org.by1337.bvault.core.util.CachedMap;
 import org.jetbrains.annotations.Nullable;
 

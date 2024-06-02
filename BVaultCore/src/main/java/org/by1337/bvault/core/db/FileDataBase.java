@@ -1,7 +1,6 @@
 package org.by1337.bvault.core.db;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;

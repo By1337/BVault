@@ -10,4 +10,19 @@
     <module>BVaultApi</module>
     <module>BVaultCore</module>
   </modules>
+
+  <distributionManagement>
+    <repository>
+      <id>by1337.repo.2</id>
+      <name>releases</name>
+      <url>https://repo.by1337.space/repository/maven-releases/</url>
+    </repository>
+    <snapshotRepository>
+      <id>by1337.repo.2</id>
+      <name>snapshots</name>
+      <url>https://repo.by1337.space/repository/maven-snapshots/</url>
+    </snapshotRepository>
+  </distributionManagement>
+
+
 </project>
