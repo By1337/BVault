@@ -110,10 +110,12 @@ public class FileDataBase implements DataBase, Listener {
         } else {
             user = new User(uuid, this);
         }
-        if (plugin.getServer().getPlayer(user.getUuid()) != null) {
-            userCash.put(uuid, user);
-        } else {
-            userCash2.put(uuid, user);
+        synchronized (lock) {
+            if (plugin.getServer().getPlayer(user.getUuid()) != null) {
+                userCash.put(uuid, user);
+            } else {
+                userCash2.put(uuid, user);
+            }
         }
         return user;
     }
