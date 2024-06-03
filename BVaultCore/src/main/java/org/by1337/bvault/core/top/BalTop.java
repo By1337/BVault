@@ -33,21 +33,19 @@ public class BalTop implements Closeable, Listener {
     private final Object lock = new Object();
     private final Plugin plugin;
     private final File dataFolder;
-    private final ThreadFactory ioThreadFactory;
-    private final ExecutorService ioExecutor;
+    @VisibleForTesting
+    final ExecutorService ioExecutor;
     @VisibleForTesting
     final HikariDataSource uuidToNameDb;
     private final int topSize;
     private final Map<String, Top> topMap = new HashMap<>();
 
-    public BalTop(Plugin plugin, int topSize) {
+    public BalTop(Plugin plugin, ExecutorService ioExecutor, int topSize) {
+        this.ioExecutor = ioExecutor;
         this.plugin = plugin;
         dataFolder = new File(plugin.getDataFolder(), "topData");
         this.topSize = topSize;
         dataFolder.mkdirs();
-        ioThreadFactory = new ThreadFactoryBuilder().setNameFormat("BVault balTop IO #%d").build();
-        ioExecutor = Executors.newCachedThreadPool(ioThreadFactory);
-
         load();
 
         HikariConfig hikariConfig = new HikariConfig();
@@ -55,6 +53,15 @@ public class BalTop implements Closeable, Listener {
         uuidToNameDb = new HikariDataSource(hikariConfig);
         createTableIfNotExist();
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
+
+    }
+
+    public BalTop(Plugin plugin, int topSize) {
+        this(
+                plugin,
+                Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("BVault balTop IO #%d").build()),
+                topSize
+        );
     }
 
     void save() {
@@ -78,7 +85,7 @@ public class BalTop implements Closeable, Listener {
 
     @VisibleForTesting
     void clear() {
-        synchronized (lock){
+        synchronized (lock) {
             topMap.clear();
         }
     }
@@ -149,51 +156,61 @@ public class BalTop implements Closeable, Listener {
     public void close() {
         save();
         PlayerJoinEvent.getHandlerList().unregister(this);
-        uuidToNameDb.close();
+        synchronized (uuidToNameDb) {
+            uuidToNameDb.close();
+        }
         ioExecutor.shutdown();
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent event) {
-        try (Connection connection = uuidToNameDb.getConnection();
-             PreparedStatement statement = connection.prepareStatement("INSERT INTO users (uuid, username) VALUES (?, ?)")
-        ) {
-            statement.setString(1, event.getPlayer().getUniqueId().toString());
-            statement.setString(2, event.getPlayer().getName());
-            statement.execute();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        ioExecutor.execute(() -> {
+            synchronized (uuidToNameDb) {
+                try (Connection connection = uuidToNameDb.getConnection();
+                     PreparedStatement statement = connection.prepareStatement("INSERT OR REPLACE INTO users (uuid, username) VALUES (?, ?)")
+                ) {
+                    statement.setString(1, event.getPlayer().getUniqueId().toString());
+                    statement.setString(2, event.getPlayer().getName());
+                    statement.execute();
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
     }
 
     private String getNickName(UUID uuid) {
         var player = plugin.getServer().getPlayer(uuid);
         if (player != null) return player.getName();
-        try (Connection connection = uuidToNameDb.getConnection();
-             PreparedStatement statement = connection.prepareStatement("SELECT username FROM users WHERE uuid = ?")
-        ) {
-            var result = statement.executeQuery();
-            if (result.next()) {
-                return result.getString("username");
+        synchronized (uuidToNameDb) {
+            try (Connection connection = uuidToNameDb.getConnection();
+                 PreparedStatement statement = connection.prepareStatement("SELECT username FROM users WHERE uuid = ?")
+            ) {
+                var result = statement.executeQuery();
+                if (result.next()) {
+                    return result.getString("username");
+                }
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to get user nickname", e);
             }
-        } catch (SQLException e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to get user nickname", e);
         }
         return "unknown";
     }
 
     private void createTableIfNotExist() {
-        try (Connection connection = uuidToNameDb.getConnection();
-             PreparedStatement statement = connection.prepareStatement("""
-                      CREATE TABLE IF NOT EXISTS users (
-                          uuid VARCHAR(32) PRIMARY KEY,
-                          username TEXT NOT NULL
-                      );
-                     """)
-        ) {
-            statement.execute();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+        synchronized (uuidToNameDb) {
+            try (Connection connection = uuidToNameDb.getConnection();
+                 PreparedStatement statement = connection.prepareStatement("""
+                          CREATE TABLE IF NOT EXISTS users (
+                              uuid VARCHAR(32) PRIMARY KEY,
+                              username TEXT NOT NULL
+                          );
+                         """)
+            ) {
+                statement.execute();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 

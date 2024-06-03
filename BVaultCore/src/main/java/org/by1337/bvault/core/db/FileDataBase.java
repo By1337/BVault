@@ -37,19 +37,17 @@ public class FileDataBase implements DataBase, Listener {
     final CachedMap<UUID, User> userCash2;
     @VisibleForTesting
     final Map<UUID, User> userCash = new HashMap<>();
-    private final ThreadFactory ioThreadFactory;
     private final ExecutorService ioExecutor;
     private final BalTop balTop;
 
-    public FileDataBase(File dataFolder, Plugin plugin, BalTop balTop) {
+    public FileDataBase(File dataFolder, Plugin plugin, BalTop balTop, ExecutorService ioExecutor) {
+        this.ioExecutor = ioExecutor;
         if (!dataFolder.exists()) {
             dataFolder.mkdirs();
         }
         this.balTop = balTop;
         this.dataFolder = dataFolder;
         this.plugin = plugin;
-        ioThreadFactory = new ThreadFactoryBuilder().setNameFormat("BVault IO #%d").build();
-        ioExecutor = Executors.newCachedThreadPool(ioThreadFactory);
 
         editCash = new CachedMap<>(5, TimeUnit.MINUTES, plugin, 60 * 20);
         userCash2 = new CachedMap<>(5, TimeUnit.MINUTES, plugin, 60 * 20);
@@ -72,6 +70,10 @@ public class FileDataBase implements DataBase, Listener {
             });
         }
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
+    }
+
+    public FileDataBase(File dataFolder, Plugin plugin, BalTop balTop) {
+        this(dataFolder, plugin, balTop, Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("BVault IO #%d").build()));
     }
 
 

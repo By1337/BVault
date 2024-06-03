@@ -37,7 +37,7 @@ public class BVaultCore extends JavaPlugin {
     private YamlConfig config;
     private BalTop balTop;
     private PAPIHook papiHook;
-    private final Map<String, String> lang = new HashMap<>();
+    private Map<String, String> lang;
 
     @Override
     public void onLoad() {
@@ -47,6 +47,7 @@ public class BVaultCore extends JavaPlugin {
         } catch (IOException | InvalidConfigurationException e) {
             throw new RuntimeException(e);
         }
+        lang = config.getMap("lang", String.class);
     }
 
     @Override

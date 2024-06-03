@@ -48,6 +48,8 @@ class FileDataBaseTest {
     private PluginManager pluginManager;
     @Mock
     private BukkitScheduler scheduler;
+    @Mock
+    private ExecutorService executorService;
     private FileDataBase fileDataBase;
     private File dataFolder;
     private UUID playerUUID;
@@ -79,7 +81,12 @@ class FileDataBaseTest {
             tickMap.add(invocation.getArgument(1));
             return mock(BukkitTask.class);
         });
-        fileDataBase = new FileDataBase(dataFolder, plugin, balTop);
+        doAnswer(invocation -> {
+            Runnable runnable = invocation.getArgument(0);
+            runnable.run();
+            return null;
+        }).when(executorService).execute(any(Runnable.class));
+        fileDataBase = new FileDataBase(dataFolder, plugin, balTop, executorService);
     }
 
     private void tick(long count) {
@@ -102,7 +109,6 @@ class FileDataBaseTest {
     @SuppressWarnings("deprecation")
     void onQuitTest() throws InterruptedException {
         fileDataBase.onJoin(new PlayerJoinEvent(player, (String) null));
-        Thread.sleep(5);
         assertFalse(fileDataBase.userCash.isEmpty());
         assertTrue(fileDataBase.userCash2.isEmpty());
         fileDataBase.onQuit(new PlayerQuitEvent(player, (String) null));
@@ -121,11 +127,9 @@ class FileDataBaseTest {
         User user = fileDataBase.getUser(UUID.randomUUID()).join();
         user.deposit("test", 1D);
         user.flush();
-        Thread.sleep(5);
         assertFalse(fileDataBase.editCash.isEmpty());
         tick(6);
         assertTrue(fileDataBase.editCash.isEmpty());
-        Thread.sleep(10); // wait for the file to be saved
         user = fileDataBase.getUser(user.getUuid()).join();
         assertTrue(new File(dataFolder, user.getUuid().toString() + ".bnbt").exists());
         assertEquals(user.getBalance("test"), 1D);

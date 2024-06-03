@@ -11,16 +11,20 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.bukkit.plugin.Plugin;
 import org.mockito.MockitoAnnotations;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.util.List;
+import java.util.Queue;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class BalTopTest {
     @Mock
@@ -32,6 +36,8 @@ public class BalTopTest {
     private BalTop balTop;
     private static final int TOP_SIZE = 10;
     private AutoCloseable closeable;
+    @Mock
+    private ExecutorService executorService;
 
     @BeforeEach
     public void setUp() {
@@ -40,7 +46,12 @@ public class BalTopTest {
         when(server.getPluginManager()).thenReturn(pluginManager);
         when(server.getPlayer(any(UUID.class))).thenAnswer(invocation -> null);
         Mockito.when(plugin.getDataFolder()).thenReturn(new File("testData"));
-        balTop = new BalTop(plugin, TOP_SIZE);
+        doAnswer(invocation -> {
+            Runnable runnable = invocation.getArgument(0);
+            runnable.run();
+            return null;
+        }).when(executorService).execute(any(Runnable.class));
+        balTop = new BalTop(plugin, executorService, TOP_SIZE);
     }
 
     @Test
@@ -58,7 +69,6 @@ public class BalTopTest {
         UUID player2 = UUID.randomUUID();
         balTop.updateBalance(player1, 100.0, "bank1");
         balTop.updateBalance(player2, 200.0, "bank1");
-        Thread.sleep(15);
 
         List<TopInfo> topList = balTop.getTop("bank1", 2);
         assertEquals(2, topList.size());
@@ -73,7 +83,6 @@ public class BalTopTest {
     public void testUpdateBalanceNewUser() throws InterruptedException {
         UUID player1 = UUID.randomUUID();
         balTop.updateBalance(player1, 100.0, "bank1");
-        Thread.sleep(15);
         List<TopInfo> topList = balTop.getTop("bank1", 1);
         assertEquals(player1, topList.get(0).player());
         assertEquals(100.0, topList.get(0).balance());
@@ -84,13 +93,11 @@ public class BalTopTest {
     public void testUpdateBalance() throws InterruptedException {
         UUID player1 = UUID.randomUUID();
         balTop.updateBalance(player1, 100.0, "bank1");
-        Thread.sleep(15);
         List<TopInfo> topList = balTop.getTop("bank1", 1);
         assertEquals(player1, topList.get(0).player());
         assertEquals(100.0, topList.get(0).balance());
 
         balTop.updateBalance(player1, 200.0, "bank1");
-        Thread.sleep(15);
         topList = balTop.getTop("bank1", 1);
         assertEquals(player1, topList.get(0).player());
         assertEquals(200.0, topList.get(0).balance());
@@ -102,13 +109,13 @@ public class BalTopTest {
         UUID player1 = UUID.randomUUID();
         balTop.updateBalance(player1, 100.0, "bank1");
         balTop.updateBalance(player1, 150.0, "bank1");
-        Thread.sleep(15);
 
         List<TopInfo> topList = balTop.getTop("bank1", 1);
         assertEquals(player1, topList.get(0).player());
         assertEquals(150.0, topList.get(0).balance());
         balTop.clear();
     }
+
     @AfterEach
     public void tearDown() throws Exception {
         File dataFolder = new File("testData/topData");
@@ -125,7 +132,6 @@ public class BalTopTest {
     public void testSaveAndLoad() throws Exception {
         UUID player1 = UUID.randomUUID();
         balTop.updateBalance(player1, 100.0, "bank1");
-        Thread.sleep(15);
 
         balTop.save();
 

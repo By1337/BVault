@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.regex.Pattern;
 
 public abstract class BEconomy {
     public static String DEFAULT_BANK = "vault";
@@ -45,6 +46,7 @@ public abstract class BEconomy {
         Objects.requireNonNull(player, "Player is null!");
         Objects.requireNonNull(bank, "bank is null!");
         Validate.assertPositive(amount);
+        Validate.charactersCheck(bank);
         return withdraw0(bank, player, amount);
     }
 
@@ -88,6 +90,7 @@ public abstract class BEconomy {
         Objects.requireNonNull(player, "Player is null!");
         Objects.requireNonNull(bank, "bank is null!");
         Validate.assertPositive(amount);
+        Validate.charactersCheck(bank);
         return deposit0(bank, player, amount);
     }
 
@@ -125,6 +128,7 @@ public abstract class BEconomy {
     public CompletableFuture<Double> getBalance(@NotNull String bank, @NotNull UUID player) {
         Objects.requireNonNull(player, "Player is null!");
         Objects.requireNonNull(bank, "bank is null!");
+        Validate.charactersCheck(bank);
         return getBalance0(bank, player);
     }
 
