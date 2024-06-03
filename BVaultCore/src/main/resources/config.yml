@@ -1,3 +1,9 @@
+balTop:
+  size: 100
+  cashTime: 60 # in sec
+  decimalFormat: '#.##'
+  emptyPos: '----'
+
 dataBase:
   type: file # sqlite, mysql, file, none
   host: "localhost"

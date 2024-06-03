@@ -3,6 +3,7 @@ package org.by1337.bvault.core.db;
 import com.zaxxer.hikari.HikariConfig;
 import org.bukkit.plugin.Plugin;
 import org.by1337.blib.configuration.YamlContext;
+import org.by1337.bvault.core.top.BalTop;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -10,8 +11,8 @@ import java.sql.SQLException;
 import java.util.logging.Level;
 
 public class MysqlDataBase extends SqlDataBase {
-    public MysqlDataBase(Plugin plugin, YamlContext cfg) {
-        super(createHikariConfig(cfg), plugin);
+    public MysqlDataBase(Plugin plugin, YamlContext cfg, BalTop balTop) {
+        super(createHikariConfig(cfg), plugin,balTop);
     }
 
     private static HikariConfig createHikariConfig(YamlContext cfg) {
@@ -36,6 +37,7 @@ public class MysqlDataBase extends SqlDataBase {
                  )
             ) {
                 Double balance = user.getBalance(bank);
+                balTop.updateBalance(user.getUuid(), balance, bank);
                 statement.setString(1, bank);
                 statement.setString(2, user.getUuid().toString());
                 statement.setDouble(3, balance);

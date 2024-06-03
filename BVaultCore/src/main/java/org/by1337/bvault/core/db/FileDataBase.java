@@ -13,6 +13,7 @@ import org.by1337.blib.nbt.NBT;
 import org.by1337.blib.nbt.NbtType;
 import org.by1337.blib.nbt.impl.CompoundTag;
 import org.by1337.blib.nbt.impl.DoubleNBT;
+import org.by1337.bvault.core.top.BalTop;
 import org.by1337.bvault.core.util.CachedMap;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -38,11 +39,13 @@ public class FileDataBase implements DataBase, Listener {
     final Map<UUID, User> userCash = new HashMap<>();
     private final ThreadFactory ioThreadFactory;
     private final ExecutorService ioExecutor;
+    private final BalTop balTop;
 
-    public FileDataBase(File dataFolder, Plugin plugin) {
+    public FileDataBase(File dataFolder, Plugin plugin, BalTop balTop) {
         if (!dataFolder.exists()) {
             dataFolder.mkdirs();
         }
+        this.balTop = balTop;
         this.dataFolder = dataFolder;
         this.plugin = plugin;
         ioThreadFactory = new ThreadFactoryBuilder().setNameFormat("BVault IO #%d").build();
@@ -51,12 +54,12 @@ public class FileDataBase implements DataBase, Listener {
         editCash = new CachedMap<>(5, TimeUnit.MINUTES, plugin, 60 * 20);
         userCash2 = new CachedMap<>(5, TimeUnit.MINUTES, plugin, 60 * 20);
 
-        userCash2.onRemove(pair -> {
+        userCash2.onExpiration(pair -> {
             if (plugin.getServer().getPlayer(pair.getLeft()) != null) {
                 userCash2.put(pair.getKey(), pair.getRight());
             }
         });
-        editCash.onRemove(pair -> CompletableFuture.runAsync(() -> {
+        editCash.onExpiration(pair -> CompletableFuture.runAsync(() -> {
             save(pair.getValue());
         }, ioExecutor));
 
@@ -158,7 +161,9 @@ public class FileDataBase implements DataBase, Listener {
                     v.putUUID("uuid", k);
                     return v;
                 });
-                nbt.computeIfAbsent("balances", CompoundTag::new).putDouble(bank, user.getBalance(bank));
+                var balance = user.getBalance(bank);
+                nbt.computeIfAbsent("balances", CompoundTag::new).putDouble(bank, balance);
+                balTop.updateBalance(user.getUuid(), balance, bank);
             }
         });
     }

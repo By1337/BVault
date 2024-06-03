@@ -10,6 +10,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
+import org.by1337.bvault.core.top.BalTop;
 import org.by1337.bvault.core.util.CachedMap;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,14 +32,16 @@ public abstract class SqlDataBase implements DataBase, Listener {
     protected final Map<UUID, User> userCash = new HashMap<>();
     protected final ThreadFactory ioThreadFactory;
     protected final ExecutorService ioExecutor;
+    protected final BalTop balTop;
 
-    public SqlDataBase(HikariConfig hikariConfig, Plugin plugin) {
+    public SqlDataBase(HikariConfig hikariConfig, Plugin plugin, BalTop balTop) {
         dataSource = new HikariDataSource(hikariConfig);
         this.plugin = plugin;
+        this.balTop = balTop;
         ioThreadFactory = new ThreadFactoryBuilder().setNameFormat("BVault IO #%d").build();
         ioExecutor = Executors.newCachedThreadPool(ioThreadFactory);
         userCash2 = new CachedMap<>(5, TimeUnit.MINUTES, plugin, 60 * 20);
-        userCash2.onRemove(pair -> {
+        userCash2.onExpiration(pair -> {
             if (plugin.getServer().getPlayer(pair.getLeft()) != null) {
                 userCash2.put(pair.getKey(), pair.getRight());
             }

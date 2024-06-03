@@ -31,7 +31,7 @@ public class CachedMap<K, V> {
     // The Bukkit task that periodically checks and removes expired entries.
     private final BukkitTask task;
     // Callback to be executed when an entry is removed.
-    private Consumer<Pair<K, V>> removeCallBack;
+    private Consumer<Pair<K, V>> expirationCallBack;
     private long ticks = 0;
     private final long cashLifeTime;
     /**
@@ -53,8 +53,8 @@ public class CachedMap<K, V> {
                     if (entry.getValue().getLeft() <= ticks) {
                         iterator.remove();
                         source.remove(entry.getKey());
-                        if (removeCallBack != null) {
-                            removeCallBack.accept(Pair.of(entry.getKey(), entry.getValue().getValue()));
+                        if (expirationCallBack != null) {
+                            expirationCallBack.accept(Pair.of(entry.getKey(), entry.getValue().getValue()));
                         }
                     }
                 }
@@ -180,8 +180,8 @@ public class CachedMap<K, V> {
      *
      * @param consumer The callback to be executed.
      */
-    public void onRemove(Consumer<Pair<K, V>> consumer) {
-        removeCallBack = consumer;
+    public void onExpiration(Consumer<Pair<K, V>> consumer) {
+        expirationCallBack = consumer;
     }
 
     /**

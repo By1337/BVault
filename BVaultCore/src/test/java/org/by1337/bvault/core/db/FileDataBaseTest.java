@@ -12,6 +12,7 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.scheduler.BukkitTask;
 import org.by1337.blib.nbt.impl.CompoundTag;
+import org.by1337.bvault.core.top.BalTop;
 import org.by1337.bvault.core.util.CachedMap;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,6 +35,8 @@ import static org.mockito.Mockito.*;
 class FileDataBaseTest {
     @Mock
     private Plugin plugin;
+    @Mock
+    private BalTop balTop;
     @Mock
     private Player player;
     private boolean playerIsOnline = true;
@@ -76,7 +79,7 @@ class FileDataBaseTest {
             tickMap.add(invocation.getArgument(1));
             return mock(BukkitTask.class);
         });
-        fileDataBase = new FileDataBase(dataFolder, plugin);
+        fileDataBase = new FileDataBase(dataFolder, plugin, balTop);
     }
 
     private void tick(long count) {

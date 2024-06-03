@@ -10,7 +10,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import java.util.concurrent.TimeUnit;
@@ -114,11 +113,11 @@ class CachedMapTest {
                 backed.set(true);
             }
         };
-        cachedMap.onRemove(callback);
+        cachedMap.onExpiration(callback);
         cachedMap.put("key1", "value1");
         tick(21);
         if (!backed.get()) {
-            throw new IllegalStateException("onRemove was not called!");
+            throw new IllegalStateException("onExpiration was not called!");
         }
     }
 

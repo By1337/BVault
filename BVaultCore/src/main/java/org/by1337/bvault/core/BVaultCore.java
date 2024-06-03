@@ -16,7 +16,9 @@ import org.by1337.bvault.api.BEconomy;
 import org.by1337.bvault.core.db.DataBase;
 import org.by1337.bvault.core.db.DataBaseFactory;
 import org.by1337.bvault.core.hook.DefaultVaultEconomyAdapter;
+import org.by1337.bvault.core.hook.PAPIHook;
 import org.by1337.bvault.core.impl.BEconomyImpl;
+import org.by1337.bvault.core.top.BalTop;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +33,8 @@ public class BVaultCore extends JavaPlugin {
     private Command<CommandSender> command;
     private Message message;
     private YamlConfig config;
+    private BalTop balTop;
+    private PAPIHook papiHook;
 
     @Override
     public void onLoad() {
@@ -44,17 +48,22 @@ public class BVaultCore extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        dataBase = DataBaseFactory.create(this, config.getAsYamlValue("dataBase").getAsYamlContext());
+        balTop = new BalTop(this, config.getAsInteger("balTop.size", 100));
+        dataBase = DataBaseFactory.create(this, config.getAsYamlValue("dataBase").getAsYamlContext(), balTop);
         BEconomy bEconomy = new BEconomyImpl(dataBase);
         Bukkit.getServicesManager().register(BEconomy.class, bEconomy, this, ServicePriority.Lowest);
         Bukkit.getServicesManager().register(Economy.class, new DefaultVaultEconomyAdapter(bEconomy), this, ServicePriority.High);
         command = new Commands().create(this);
+        papiHook = new PAPIHook(config.getAsYamlValue("balTop").getAsYamlContext(), balTop, this);
+        papiHook.register();
     }
 
     @Override
     public void onDisable() {
         Bukkit.getServicesManager().unregisterAll(this);
         dataBase.close();
+        balTop.close();
+        papiHook.unregister();
     }
 
 

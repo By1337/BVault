@@ -2,6 +2,7 @@ package org.by1337.bvault.core.db;
 
 import com.zaxxer.hikari.HikariConfig;
 import org.bukkit.plugin.Plugin;
+import org.by1337.bvault.core.top.BalTop;
 
 import java.io.File;
 import java.sql.Connection;
@@ -11,8 +12,8 @@ import java.util.logging.Level;
 
 public class SqliteDatabase extends SqlDataBase {
 
-    public SqliteDatabase(Plugin plugin) {
-        super(createHikariConfig(plugin), plugin);
+    public SqliteDatabase(Plugin plugin, BalTop balTop) {
+        super(createHikariConfig(plugin), plugin, balTop);
     }
 
     private static HikariConfig createHikariConfig( Plugin plugin) {
@@ -22,6 +23,7 @@ public class SqliteDatabase extends SqlDataBase {
     }
     @Override
     public void flushUser(User user, String bank) {
+
         ioExecutor.execute(() -> {
             try (Connection connection = dataSource.getConnection();
                  PreparedStatement statement = connection.prepareStatement("""
@@ -31,6 +33,7 @@ public class SqliteDatabase extends SqlDataBase {
                       """)
             ) {
                 Double balance = user.getBalance(bank);
+                balTop.updateBalance(user.getUuid(), balance, bank);
                 statement.setString(1, bank);
                 statement.setString(2, user.getUuid().toString());
                 statement.setDouble(3, balance);
