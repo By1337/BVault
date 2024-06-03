@@ -12,3 +12,10 @@ dataBase:
   password: "password"
   dbName: "vault"
   maxPoolSize: 5
+
+lang:
+  hasMoney: 'Player %s has %s coins in bank %s.'
+  failedToGetBalance: '&cFailed to retrieve player balance :('
+  updateBalance: "Player %s now has %s coins in bank %s."
+  failed: '&cOperation failed :('
+  vaultProvider: "Current economy provider is '%s'"

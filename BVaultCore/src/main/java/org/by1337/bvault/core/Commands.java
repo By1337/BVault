@@ -13,8 +13,8 @@ import java.util.List;
 
 public class Commands {
 
-    public Command<CommandSender> create(BVaultCore core){
-        return  new Command<CommandSender>("root")
+    public Command<CommandSender> create(BVaultCore core) {
+        return new Command<CommandSender>("root")
                 .requires(new RequiresPermission<>("bvault.use"))
                 .addSubCommand(new Command<CommandSender>("balance")
                         .requires(new RequiresPermission<>("bvault.balance"))
@@ -29,13 +29,13 @@ public class Commands {
                                 }
                                 if (sender instanceof Player) { // no log
                                     if (d != null) {
-                                        core.getMessage().sendMsg(sender, "Игрок %s имеет %s монет в банке %s.",
+                                        core.getMessage().sendMsg(sender, core.getLang().get("hasMoney"),
                                                 player.getName(),
                                                 d,
                                                 bank
                                         );
                                     } else {
-                                        core.getMessage().sendMsg(sender, "&cНе удалось получить баланс игрока :(");
+                                        core.getMessage().sendMsg(sender, core.getLang().get("failedToGetBalance"));
                                     }
                                 }
                             });
@@ -57,13 +57,13 @@ public class Commands {
                                 }
                                 if (sender instanceof Player) { // no log
                                     if (d != null) {
-                                        core.getMessage().sendMsg(sender, "Игрок %s теперь имеет %s монет в банке %s.",
+                                        core.getMessage().sendMsg(sender, core.getLang().get("updateBalance"),
                                                 player.getName(),
                                                 d,
                                                 bank
                                         );
                                     } else {
-                                        core.getMessage().sendMsg(sender, "&cНе удалось выполнить операцию :(");
+                                        core.getMessage().sendMsg(sender, core.getLang().get("failed"));
                                     }
                                 }
                             });
@@ -86,13 +86,13 @@ public class Commands {
                                 }
                                 if (sender instanceof Player) { // no log
                                     if (d != null) {
-                                        core.getMessage().sendMsg(sender, "Игрок %s теперь имеет %s монет в банке %s.",
+                                        core.getMessage().sendMsg(sender, core.getLang().get("updateBalance"),
                                                 player.getName(),
                                                 d,
                                                 bank
                                         );
                                     } else {
-                                        core.getMessage().sendMsg(sender, "&cНе удалось выполнить операцию :(");
+                                        core.getMessage().sendMsg(sender, core.getLang().get("failed"));
                                     }
                                 }
                             });
@@ -102,9 +102,9 @@ public class Commands {
                 .addSubCommand(new Command<CommandSender>("ecoName")
                         .requires(new RequiresPermission<>("bvault.ecoName"))
                         .executor(((sender, args) -> {
-                            core.getMessage().sendMsg(sender, "Текущий поставщик экономики '%s'", core.getEconomy().getName());
+                            core.getMessage().sendMsg(sender, core.getLang().get("vaultProvider"), core.getEconomy().getName());
                         }))
                 )
-        ;
+                ;
     }
 }

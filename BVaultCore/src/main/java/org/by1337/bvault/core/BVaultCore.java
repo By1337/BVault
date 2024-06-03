@@ -24,7 +24,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Level;
 
@@ -35,6 +37,7 @@ public class BVaultCore extends JavaPlugin {
     private YamlConfig config;
     private BalTop balTop;
     private PAPIHook papiHook;
+    private final Map<String, String> lang = new HashMap<>();
 
     @Override
     public void onLoad() {
@@ -103,5 +106,9 @@ public class BVaultCore extends JavaPlugin {
             saveResource(path, false);
         }
         return f;
+    }
+
+    public Map<String, String> getLang() {
+        return lang;
     }
 }
