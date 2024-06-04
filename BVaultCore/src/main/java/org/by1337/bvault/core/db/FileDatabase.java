@@ -21,13 +21,11 @@ import org.jetbrains.annotations.VisibleForTesting;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.logging.Level;
 
-public class FileDataBase implements DataBase, Listener {
+public class FileDatabase implements Database, Listener {
     private final Object lock = new Object();
     private final File dataFolder;
     private final Plugin plugin;
@@ -40,7 +38,7 @@ public class FileDataBase implements DataBase, Listener {
     private final ExecutorService ioExecutor;
     private final BalTop balTop;
 
-    public FileDataBase(File dataFolder, Plugin plugin, BalTop balTop, ExecutorService ioExecutor) {
+    public FileDatabase(File dataFolder, Plugin plugin, BalTop balTop, ExecutorService ioExecutor) {
         this.ioExecutor = ioExecutor;
         if (!dataFolder.exists()) {
             dataFolder.mkdirs();
@@ -72,7 +70,7 @@ public class FileDataBase implements DataBase, Listener {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
-    public FileDataBase(File dataFolder, Plugin plugin, BalTop balTop) {
+    public FileDatabase(File dataFolder, Plugin plugin, BalTop balTop) {
         this(dataFolder, plugin, balTop, Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("BVault IO #%d").build()));
     }
 
@@ -136,6 +134,10 @@ public class FileDataBase implements DataBase, Listener {
     @Nullable
     private CompoundTag loadFromFile(UUID uuid) {
         File file = new File(dataFolder, uuid.toString() + ".bnbt");
+        return readFile(file);
+    }
+
+    private CompoundTag readFile(File file) {
         try {
             if (file.exists()) {
                 byte[] bytes = Files.readAllBytes(file.toPath());
@@ -150,6 +152,48 @@ public class FileDataBase implements DataBase, Listener {
             }
             return null;
         }
+    }
+
+    @Override
+    public CompletableFuture<Void> clearDb(String bank) {
+        return CompletableFuture.runAsync(() -> {
+            synchronized (lock) {
+                if (bank == null) {
+                    for (File file : dataFolder.listFiles()) {
+                        file.delete();
+                    }
+                } else {
+                    for (File file : dataFolder.listFiles()) {
+                        var tag = readFile(file);
+                        if (tag != null) {
+                            tag.computeIfAbsent("balances", CompoundTag::new).remove(bank);
+                            save(tag);
+                        }
+                    }
+                }
+                for (Collection<User> list : List.of(userCash.values(), userCash2.values())) {
+                    for (User value : list) {
+                        if (bank != null) {
+                            value.balances.remove(bank);
+                            value.balancesOld.remove(bank);
+                        } else {
+                            value.balances.clear();
+                            value.balancesOld.clear();
+                        }
+                    }
+                }
+                if (bank == null) {
+                    balTop.clear();
+                } else {
+                    balTop.clearBalancesIn(bank);
+                }
+            }
+        });
+    }
+
+    @Override
+    public CompletableFuture<Void> clearDb() {
+        return clearDb(null);
     }
 
     @Override

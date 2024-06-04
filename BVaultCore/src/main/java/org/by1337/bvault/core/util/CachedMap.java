@@ -7,6 +7,7 @@ import org.by1337.blib.util.Pair;
 import org.by1337.bvault.api.Validate;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -171,7 +172,12 @@ public class CachedMap<K, V> {
      */
     public Set<Map.Entry<K, V>> entrySet() {
         synchronized (lock) {
-            return source.entrySet();
+            return source.entrySet(); // hmm
+        }
+    }
+    public Collection<V> values(){
+        synchronized (lock){
+            return source.values();
         }
     }
 

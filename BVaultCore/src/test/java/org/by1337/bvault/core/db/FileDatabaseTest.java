@@ -2,7 +2,6 @@ package org.by1337.bvault.core.db;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -11,17 +10,12 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.scheduler.BukkitTask;
-import org.by1337.blib.nbt.impl.CompoundTag;
 import org.by1337.bvault.core.top.BalTop;
-import org.by1337.bvault.core.util.CachedMap;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +26,7 @@ import java.util.logging.Logger;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-class FileDataBaseTest {
+class FileDatabaseTest {
     @Mock
     private Plugin plugin;
     @Mock
@@ -50,7 +44,7 @@ class FileDataBaseTest {
     private BukkitScheduler scheduler;
     @Mock
     private ExecutorService executorService;
-    private FileDataBase fileDataBase;
+    private FileDatabase fileDataBase;
     private File dataFolder;
     private UUID playerUUID;
     private final List<Runnable> tickMap = new ArrayList<>();
@@ -86,7 +80,7 @@ class FileDataBaseTest {
             runnable.run();
             return null;
         }).when(executorService).execute(any(Runnable.class));
-        fileDataBase = new FileDataBase(dataFolder, plugin, balTop, executorService);
+        fileDataBase = new FileDatabase(dataFolder, plugin, balTop, executorService);
     }
 
     private void tick(long count) {

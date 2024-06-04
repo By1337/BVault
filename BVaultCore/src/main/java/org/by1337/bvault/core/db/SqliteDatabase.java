@@ -10,7 +10,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.logging.Level;
 
-public class SqliteDatabase extends SqlDataBase {
+public class SqliteDatabase extends SqlDatabase {
 
     public SqliteDatabase(Plugin plugin, BalTop balTop) {
         super(createHikariConfig(plugin), plugin, balTop);
@@ -25,21 +25,23 @@ public class SqliteDatabase extends SqlDataBase {
     public void flushUser(User user, String bank) {
 
         ioExecutor.execute(() -> {
-            try (Connection connection = dataSource.getConnection();
-                 PreparedStatement statement = connection.prepareStatement("""
+            synchronized (dataSource) {
+                try (Connection connection = dataSource.getConnection();
+                     PreparedStatement statement = connection.prepareStatement("""
                      INSERT INTO user_balance (bank_name, user_id, balance)
                      VALUES (?, ?, ?)
                      ON CONFLICT(bank_name, user_id) DO UPDATE SET balance = excluded.balance;
                       """)
-            ) {
-                Double balance = user.getBalance(bank);
-                balTop.updateBalance(user.getUuid(), balance, bank);
-                statement.setString(1, bank);
-                statement.setString(2, user.getUuid().toString());
-                statement.setDouble(3, balance);
-                statement.execute();
-            } catch (SQLException e) {
-                plugin.getLogger().log(Level.SEVERE, "Failed to flush user!", e);
+                ) {
+                    Double balance = user.getBalance(bank);
+                    balTop.updateBalance(user.getUuid(), balance, bank);
+                    statement.setString(1, bank);
+                    statement.setString(2, user.getUuid().toString());
+                    statement.setDouble(3, balance);
+                    statement.execute();
+                } catch (SQLException e) {
+                    plugin.getLogger().log(Level.SEVERE, "Failed to flush user!", e);
+                }
             }
         });
     }

@@ -8,9 +8,9 @@ import java.io.File;
 
 public enum DataBaseFactory {
     SQLITE("sqlite", (plugin, cfg, top) -> new SqliteDatabase(plugin, top)),
-    MYSQL("mysql", MysqlDataBase::new),
-    FILE("file", (plugin, cfg, top) -> new FileDataBase(new File(plugin.getDataFolder(), "data"), plugin, top)),
-    NONE("none", (plugin, cfg, top) -> new EmptyDataBase());
+    MYSQL("mysql", MysqlDatabase::new),
+    FILE("file", (plugin, cfg, top) -> new FileDatabase(new File(plugin.getDataFolder(), "data"), plugin, top)),
+    NONE("none", (plugin, cfg, top) -> new EmptyDatabase());
 
     private final String id;
     private final Creator creator;
@@ -20,7 +20,7 @@ public enum DataBaseFactory {
         this.creator = creator;
     }
 
-    public static DataBase create(Plugin plugin, YamlContext cfg, BalTop balTop) {
+    public static Database create(Plugin plugin, YamlContext cfg, BalTop balTop) {
         String type = cfg.getAsString("type");
         for (DataBaseFactory value : values()) {
             if (value.id.equalsIgnoreCase(type) || value.name().equalsIgnoreCase(type)) {
@@ -31,6 +31,6 @@ public enum DataBaseFactory {
     }
 
     private interface Creator {
-        DataBase create(Plugin plugin, YamlContext cfg, BalTop balTop);
+        Database create(Plugin plugin, YamlContext cfg, BalTop balTop);
     }
 }

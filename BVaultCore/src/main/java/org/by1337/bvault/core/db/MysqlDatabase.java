@@ -10,8 +10,8 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.logging.Level;
 
-public class MysqlDataBase extends SqlDataBase {
-    public MysqlDataBase(Plugin plugin, YamlContext cfg, BalTop balTop) {
+public class MysqlDatabase extends SqlDatabase {
+    public MysqlDatabase(Plugin plugin, YamlContext cfg, BalTop balTop) {
         super(createHikariConfig(cfg), plugin,balTop);
     }
 
@@ -31,20 +31,22 @@ public class MysqlDataBase extends SqlDataBase {
     @Override
     public void flushUser(User user, String bank) {
         ioExecutor.execute(() -> {
-            try (Connection connection = dataSource.getConnection();
-                 PreparedStatement statement = connection.prepareStatement(
-                         "INSERT INTO user_balance (bank_name, user_id, balance) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE balance = ?;"
-                 )
-            ) {
-                Double balance = user.getBalance(bank);
-                balTop.updateBalance(user.getUuid(), balance, bank);
-                statement.setString(1, bank);
-                statement.setString(2, user.getUuid().toString());
-                statement.setDouble(3, balance);
-                statement.setDouble(4, balance);
-                statement.execute();
-            } catch (SQLException e) {
-                plugin.getLogger().log(Level.SEVERE, "Failed to flush user!", e);
+            synchronized (dataSource) {
+                try (Connection connection = dataSource.getConnection();
+                     PreparedStatement statement = connection.prepareStatement(
+                             "INSERT INTO user_balance (bank_name, user_id, balance) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE balance = ?;"
+                     )
+                ) {
+                    Double balance = user.getBalance(bank);
+                    balTop.updateBalance(user.getUuid(), balance, bank);
+                    statement.setString(1, bank);
+                    statement.setString(2, user.getUuid().toString());
+                    statement.setDouble(3, balance);
+                    statement.setDouble(4, balance);
+                    statement.execute();
+                } catch (SQLException e) {
+                    plugin.getLogger().log(Level.SEVERE, "Failed to flush user!", e);
+                }
             }
         });
     }

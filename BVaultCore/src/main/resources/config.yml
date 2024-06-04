@@ -19,3 +19,5 @@ lang:
   updateBalance: "Player %s now has %s coins in bank %s."
   failed: '&cOperation failed :('
   vaultProvider: "Current economy provider is '%s'"
+  cantClear: '&cCannot clear the database!'
+  successfully: '&aOperation completed in %s ms.'

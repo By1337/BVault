@@ -83,10 +83,16 @@ public class BalTop implements Closeable, Listener {
         }
     }
 
-    @VisibleForTesting
-    void clear() {
+
+    public void clear() {
         synchronized (lock) {
             topMap.clear();
+        }
+    }
+
+    public void clearBalancesIn(String bank) {
+        synchronized (lock) {
+            topMap.remove(bank);
         }
     }
 

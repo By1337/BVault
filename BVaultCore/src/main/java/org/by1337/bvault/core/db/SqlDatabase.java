@@ -18,13 +18,11 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.logging.Level;
 
-public abstract class SqlDataBase implements DataBase, Listener {
+public abstract class SqlDatabase implements Database, Listener {
     protected final HikariDataSource dataSource;
     protected final Plugin plugin;
     protected final Object lock = new Object();
@@ -34,7 +32,7 @@ public abstract class SqlDataBase implements DataBase, Listener {
     protected final ExecutorService ioExecutor;
     protected final BalTop balTop;
 
-    public SqlDataBase(HikariConfig hikariConfig, Plugin plugin, BalTop balTop) {
+    public SqlDatabase(HikariConfig hikariConfig, Plugin plugin, BalTop balTop) {
         dataSource = new HikariDataSource(hikariConfig);
         this.plugin = plugin;
         this.balTop = balTop;
@@ -75,23 +73,70 @@ public abstract class SqlDataBase implements DataBase, Listener {
         return null;
     }
 
-    private User loadUser(UUID uuid) {
-        Map<String, Double> balances = new HashMap<>();
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement("SELECT bank_name, balance FROM user_balance WHERE user_id = ?")
-        ) {
-            statement.setString(1, uuid.toString());
-
-            try (ResultSet resultSet = statement.executeQuery()) {
-                while (resultSet.next()) {
-                    balances.put(
-                            resultSet.getString("bank_name"),
-                            resultSet.getDouble("balance")
-                    );
+    @Override
+    public CompletableFuture<Void> clearDb(String bank) {
+        return CompletableFuture.runAsync(() -> {
+            synchronized (dataSource) {
+                try (Connection connection = dataSource.getConnection();
+                     PreparedStatement statement = connection.prepareStatement(
+                             bank != null ?
+                                     "DELETE FROM user_balance WHERE bank_name = ?" :
+                                     "DELETE FROM user_balance;"
+                     )
+                ) {
+                    if (bank != null) {
+                        statement.setString(1, bank);
+                    }
+                    statement.execute();
+                    synchronized (lock) {
+                        for (Collection<User> list : List.of(userCash.values(), userCash2.values())) {
+                            for (User value : list) {
+                                if (bank != null) {
+                                    value.balances.remove(bank);
+                                    value.balancesOld.remove(bank);
+                                } else {
+                                    value.balances.clear();
+                                    value.balancesOld.clear();
+                                }
+                            }
+                        }
+                        if (bank == null) {
+                            balTop.clear();
+                        } else {
+                            balTop.clearBalancesIn(bank);
+                        }
+                    }
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
                 }
             }
-        } catch (SQLException e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to load user!", e);
+        });
+    }
+
+    @Override
+    public CompletableFuture<Void> clearDb() {
+        return clearDb(null);
+    }
+
+    private User loadUser(UUID uuid) {
+        Map<String, Double> balances = new HashMap<>();
+        synchronized (dataSource) {
+            try (Connection connection = dataSource.getConnection();
+                 PreparedStatement statement = connection.prepareStatement("SELECT bank_name, balance FROM user_balance WHERE user_id = ?")
+            ) {
+                statement.setString(1, uuid.toString());
+
+                try (ResultSet resultSet = statement.executeQuery()) {
+                    while (resultSet.next()) {
+                        balances.put(
+                                resultSet.getString("bank_name"),
+                                resultSet.getDouble("balance")
+                        );
+                    }
+                }
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to load user!", e);
+            }
         }
         var user = new User(balances, uuid, this);
         synchronized (lock) {
@@ -108,7 +153,9 @@ public abstract class SqlDataBase implements DataBase, Listener {
     public void close() {
         PlayerJoinEvent.getHandlerList().unregister(this);
         PlayerQuitEvent.getHandlerList().unregister(this);
-        dataSource.close();
+        synchronized (dataSource) {
+            dataSource.close();
+        }
         ioExecutor.shutdown();
     }
 
@@ -132,8 +179,9 @@ public abstract class SqlDataBase implements DataBase, Listener {
     }
 
     private void createTableIfNotExist() {
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement("""
+        synchronized (dataSource) {
+            try (Connection connection = dataSource.getConnection();
+                 PreparedStatement statement = connection.prepareStatement("""
                      CREATE TABLE IF NOT EXISTS user_balance
                      (
                          bank_name VARCHAR(128),
@@ -142,10 +190,11 @@ public abstract class SqlDataBase implements DataBase, Listener {
                          PRIMARY KEY (bank_name, user_id)
                      );
                      """)
-        ) {
-            statement.execute();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+            ) {
+                statement.execute();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 }

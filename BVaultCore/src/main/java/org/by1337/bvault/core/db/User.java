@@ -14,13 +14,13 @@ public class User {
     // Lock object for synchronizing access to balances.
     private final Object lock = new Object();
     // Stores the initial balances of the user for comparison.
-    private final Map<String, Double> balancesOld;
+    final Map<String, Double> balancesOld;
     // Stores the current balances of the user.
-    private final Map<String, Double> balances;
+    final Map<String, Double> balances;
     // Unique identifier for the user.
     private final UUID uuid;
     // Reference to the database for persistence operations.
-    private final DataBase dataBase;
+    private final Database dataBase;
 
     /**
      * Creates a User with specified balances, UUID, and database reference.
@@ -29,7 +29,7 @@ public class User {
      * @param uuid     Unique identifier for the user.
      * @param dataBase Reference to the database.
      */
-    User(Map<String, Double> balances, UUID uuid, DataBase dataBase) {
+    User(Map<String, Double> balances, UUID uuid, Database dataBase) {
         this.balances = balances;
         this.uuid = uuid;
         this.dataBase = dataBase;
@@ -42,7 +42,7 @@ public class User {
      * @param uuid     Unique identifier for the user.
      * @param dataBase Reference to the database.
      */
-    User(UUID uuid, DataBase dataBase) {
+    User(UUID uuid, Database dataBase) {
         this.uuid = uuid;
         this.dataBase = dataBase;
         this.balances = new HashMap<>();
@@ -116,4 +116,5 @@ public class User {
     public UUID getUuid() {
         return uuid;
     }
+
 }

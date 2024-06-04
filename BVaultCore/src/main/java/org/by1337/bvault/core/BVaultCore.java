@@ -1,10 +1,12 @@
 package org.by1337.bvault.core;
 
+import com.google.common.base.Charsets;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.InvalidConfigurationException;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -13,7 +15,7 @@ import org.by1337.blib.command.Command;
 import org.by1337.blib.command.CommandException;
 import org.by1337.blib.configuration.YamlConfig;
 import org.by1337.bvault.api.BEconomy;
-import org.by1337.bvault.core.db.DataBase;
+import org.by1337.bvault.core.db.Database;
 import org.by1337.bvault.core.db.DataBaseFactory;
 import org.by1337.bvault.core.hook.DefaultVaultEconomyAdapter;
 import org.by1337.bvault.core.hook.PAPIHook;
@@ -24,14 +26,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
+import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.logging.Level;
 
 public class BVaultCore extends JavaPlugin {
-    private DataBase dataBase;
+    private Database dataBase;
     private Command<CommandSender> command;
     private Message message;
     private YamlConfig config;
@@ -91,9 +92,11 @@ public class BVaultCore extends JavaPlugin {
             command.process(sender, args);
             return true;
         } catch (CommandException e) {
-            this.getLogger().log(Level.SEVERE, "", e);
-            return false;
+            sender.sendMessage(e.getMessage());
+        } catch (Throwable t) {
+            message.error(t);
         }
+        return false;
     }
 
     @CanIgnoreReturnValue

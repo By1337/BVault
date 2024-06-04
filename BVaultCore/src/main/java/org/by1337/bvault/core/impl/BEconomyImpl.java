@@ -1,19 +1,22 @@
 package org.by1337.bvault.core.impl;
 
 import org.by1337.bvault.api.BEconomy;
-import org.by1337.bvault.core.db.DataBase;
+import org.by1337.bvault.core.db.Database;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 public class BEconomyImpl extends BEconomy {
-    private final DataBase dataBase;
+    private final Database dataBase;
 
-    public BEconomyImpl(DataBase dataBase) {
+    public BEconomyImpl(Database dataBase) {
         this.dataBase = dataBase;
     }
 
+    public Database getDataBase() {
+        return dataBase;
+    }
 
     /**
      * Gets the name of the economy system.
