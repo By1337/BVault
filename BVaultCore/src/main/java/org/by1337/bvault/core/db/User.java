@@ -2,10 +2,7 @@ package org.by1337.bvault.core.db;
 
 import org.by1337.bvault.api.Validate;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Represents a User with a unique identifier and balances for multiple banks.
@@ -105,6 +102,17 @@ public class User {
     public Double getBalance(String bank) {
         synchronized (lock) {
             return balances.getOrDefault(bank, 0D);
+        }
+    }
+
+    /**
+     * Retrieves the all names of banks.
+     *
+     * @return The list with all existed bank accounts.
+     */
+    public Set<String> getExistedBanks() {
+        synchronized (lock) {
+            return balances.keySet();
         }
     }
 
