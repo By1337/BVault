@@ -3,6 +3,7 @@ package org.by1337.bvault.api;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Pattern;
@@ -141,4 +142,25 @@ public abstract class BEconomy {
      * @return A CompletableFuture containing the balance.
      */
     protected abstract CompletableFuture<Double> getBalance0(@NotNull String bank, @NotNull UUID player);
+
+    /**
+     * Gets the set of all existed player's bank accounts.
+     *
+     * @param player The UUID of the player.
+     * @return A CompletableFuture containing the banks.
+     * @throws NullPointerException if the player is null.
+     */
+    public CompletableFuture<Set<String>> getExistedBanks(@NotNull UUID player) {
+        Objects.requireNonNull(player, "Player is null!");
+        return getExistedBanks0(player);
+    }
+
+    /**
+     * Gets the set of all existed player's bank accounts.
+     * To be implemented by subclasses.
+     *
+     * @param player The UUID of the player.
+     * @return A CompletableFuture containing the banks.
+     */
+    protected abstract CompletableFuture<Set<String>> getExistedBanks0(@NotNull UUID player);
 }

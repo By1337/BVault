@@ -4,6 +4,7 @@ import org.by1337.bvault.api.BEconomy;
 import org.by1337.bvault.core.db.Database;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -77,5 +78,10 @@ public class BEconomyImpl extends BEconomy {
     @Override
     protected CompletableFuture<Double> getBalance0(@NotNull String bank, @NotNull UUID player) {
         return CompletableFuture.supplyAsync(() -> dataBase.getUser(player).join().getBalance(bank));
+    }
+
+    @Override
+    protected CompletableFuture<Set<String>> getExistedBanks0(@NotNull UUID player) {
+        return CompletableFuture.supplyAsync(() -> dataBase.getUser(player).join().getExistedBanks());
     }
 }
