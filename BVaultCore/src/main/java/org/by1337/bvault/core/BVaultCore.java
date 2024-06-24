@@ -17,6 +17,8 @@ import org.by1337.blib.configuration.YamlConfig;
 import org.by1337.bvault.api.BEconomy;
 import org.by1337.bvault.core.db.Database;
 import org.by1337.bvault.core.db.DataBaseFactory;
+import org.by1337.bvault.core.db.DisabledDatabase;
+import org.by1337.bvault.core.db.SwapableDatabase;
 import org.by1337.bvault.core.hook.DefaultVaultEconomyAdapter;
 import org.by1337.bvault.core.hook.PAPIHook;
 import org.by1337.bvault.core.impl.BEconomyImpl;
@@ -33,6 +35,7 @@ import java.util.Objects;
 
 public class BVaultCore extends JavaPlugin {
     private Database dataBase;
+    private SwapableDatabase swapableDatabase;
     private Command<CommandSender> command;
     private Message message;
     private YamlConfig config;
@@ -49,15 +52,20 @@ public class BVaultCore extends JavaPlugin {
             throw new RuntimeException(e);
         }
         lang = config.getMap("lang", String.class);
+        swapableDatabase = new SwapableDatabase(new DisabledDatabase());
+
+        BEconomy bEconomy = new BEconomyImpl(swapableDatabase);
+        Bukkit.getServicesManager().register(BEconomy.class, bEconomy, this, ServicePriority.Lowest);
+        Bukkit.getServicesManager().register(Economy.class, new DefaultVaultEconomyAdapter(bEconomy), this, ServicePriority.High);
     }
 
     @Override
     public void onEnable() {
         balTop = new BalTop(this, config.getAsInteger("balTop.size", 100));
         dataBase = DataBaseFactory.create(this, config.getAsYamlValue("dataBase").getAsYamlContext(), balTop);
-        BEconomy bEconomy = new BEconomyImpl(dataBase);
-        Bukkit.getServicesManager().register(BEconomy.class, bEconomy, this, ServicePriority.Lowest);
-        Bukkit.getServicesManager().register(Economy.class, new DefaultVaultEconomyAdapter(bEconomy), this, ServicePriority.High);
+
+        swapableDatabase.setSource(dataBase);
+
         command = new Commands().create(this);
         papiHook = new PAPIHook(config.getAsYamlValue("balTop").getAsYamlContext(), balTop, this);
         papiHook.register();
