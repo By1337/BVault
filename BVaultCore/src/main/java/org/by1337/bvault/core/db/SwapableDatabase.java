@@ -1,5 +1,10 @@
 package org.by1337.bvault.core.db;
 
+import org.by1337.bvault.core.top.TopInfo;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -10,13 +15,17 @@ public class SwapableDatabase implements Database {
         this.source = source;
     }
 
+    public void setSource(Database source) {
+        this.source = source;
+    }
+
     @Override
-    public CompletableFuture<User> getUser(UUID uuid) {
+    public CompletableFuture<User> getUser(@NotNull UUID uuid) {
         return source.getUser(uuid);
     }
 
     @Override
-    public void flushUser(User user, String bank) {
+    public void flushUser(@NotNull User user, @NotNull String bank) {
         source.flushUser(user, bank);
     }
 
@@ -26,20 +35,24 @@ public class SwapableDatabase implements Database {
     }
 
     @Override
-    public CompletableFuture<Void> clearDb(String bank) {
-        return source.clearDb(bank);
+    public CompletableFuture<Void> dropBalancesIn(@NotNull String bank) {
+        return source.dropBalancesIn(bank);
     }
 
     @Override
-    public CompletableFuture<Void> clearDb() {
-        return source.clearDb();
+    public CompletableFuture<Void> dropBalances() {
+        return source.dropBalances();
     }
 
-    public Database getSource() {
-        return source;
+    @Override
+    public Set<String> getKnownBanks() {
+        return source.getKnownBanks();
     }
 
-    public void setSource(Database source) {
-        this.source = source;
+    @Override
+    public CompletableFuture<@NotNull List<@NotNull TopInfo>> getTopByBank(@NotNull String bank, int limit) {
+        return source.getTopByBank(bank, limit);
     }
+
 }
+

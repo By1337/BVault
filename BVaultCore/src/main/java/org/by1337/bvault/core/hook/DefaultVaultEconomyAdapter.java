@@ -103,12 +103,12 @@ public class DefaultVaultEconomyAdapter implements Economy {
     }
 
     /**
-     * Checks if this player has an account on the server yet
-     * This will always return true if the player has joined the server at least once
-     * as all major economy plugins auto-generate a player account when the player joins the server
+     * Checks if this uuid has an account on the server yet
+     * This will always return true if the uuid has joined the server at least once
+     * as all major economy plugins auto-generate a uuid account when the uuid joins the server
      *
      * @param player to check
-     * @return if the player has an account
+     * @return if the uuid has an account
      */
     @Override
     public boolean hasAccount(OfflinePlayer player) {
@@ -126,13 +126,13 @@ public class DefaultVaultEconomyAdapter implements Economy {
     }
 
     /**
-     * Checks if this player has an account on the server yet on the given world
-     * This will always return true if the player has joined the server at least once
-     * as all major economy plugins auto-generate a player account when the player joins the server
+     * Checks if this uuid has an account on the server yet on the given world
+     * This will always return true if the uuid has joined the server at least once
+     * as all major economy plugins auto-generate a uuid account when the uuid joins the server
      *
      * @param player    to check in the world
      * @param worldName world-specific account
-     * @return if the player has an account
+     * @return if the uuid has an account
      */
     @Override
     public boolean hasAccount(OfflinePlayer player, String worldName) {
@@ -149,9 +149,9 @@ public class DefaultVaultEconomyAdapter implements Economy {
     }
 
     /**
-     * Gets balance of a player
+     * Gets balance of a uuid
      *
-     * @param player of the player
+     * @param player of the uuid
      * @return Amount currently held in players account
      */
     @Override
@@ -170,7 +170,7 @@ public class DefaultVaultEconomyAdapter implements Economy {
     }
 
     /**
-     * Gets balance of a player on the specified world.
+     * Gets balance of a uuid on the specified world.
      * IMPLEMENTATION SPECIFIC - if an economy plugin does not support this the global balance will be returned.
      *
      * @param player to check
@@ -193,11 +193,11 @@ public class DefaultVaultEconomyAdapter implements Economy {
     }
 
     /**
-     * Checks if the player account has the amount - DO NOT USE NEGATIVE AMOUNTS
+     * Checks if the uuid account has the amount - DO NOT USE NEGATIVE AMOUNTS
      *
      * @param player to check
      * @param amount to check for
-     * @return True if <b>player</b> has <b>amount</b>, False else wise
+     * @return True if <b>uuid</b> has <b>amount</b>, False else wise
      */
     @Override
     public boolean has(OfflinePlayer player, double amount) {
@@ -216,13 +216,13 @@ public class DefaultVaultEconomyAdapter implements Economy {
     }
 
     /**
-     * Checks if the player account has the amount in a given world - DO NOT USE NEGATIVE AMOUNTS
+     * Checks if the uuid account has the amount in a given world - DO NOT USE NEGATIVE AMOUNTS
      * IMPLEMENTATION SPECIFIC - if an economy plugin does not support this the global balance will be returned.
      *
      * @param player    to check
      * @param worldName to check with
      * @param amount    to check for
-     * @return True if <b>player</b> has <b>amount</b>, False else wise
+     * @return True if <b>uuid</b> has <b>amount</b>, False else wise
      */
     @Override
     public boolean has(OfflinePlayer player, String worldName, double amount) {
@@ -240,7 +240,7 @@ public class DefaultVaultEconomyAdapter implements Economy {
     }
 
     /**
-     * Withdraw an amount from a player - DO NOT USE NEGATIVE AMOUNTS
+     * Withdraw an amount from a uuid - DO NOT USE NEGATIVE AMOUNTS
      *
      * @param player to withdraw from
      * @param amount Amount to withdraw
@@ -268,7 +268,7 @@ public class DefaultVaultEconomyAdapter implements Economy {
     }
 
     /**
-     * Withdraw an amount from a player on a given world - DO NOT USE NEGATIVE AMOUNTS
+     * Withdraw an amount from a uuid on a given world - DO NOT USE NEGATIVE AMOUNTS
      * IMPLEMENTATION SPECIFIC - if an economy plugin does not support this the global balance will be returned.
      *
      * @param player    to withdraw from
@@ -297,7 +297,7 @@ public class DefaultVaultEconomyAdapter implements Economy {
     }
 
     /**
-     * Deposit an amount to a player - DO NOT USE NEGATIVE AMOUNTS
+     * Deposit an amount to a uuid - DO NOT USE NEGATIVE AMOUNTS
      *
      * @param player to deposit to
      * @param amount Amount to deposit
@@ -325,7 +325,7 @@ public class DefaultVaultEconomyAdapter implements Economy {
     }
 
     /**
-     * Deposit an amount to a player - DO NOT USE NEGATIVE AMOUNTS
+     * Deposit an amount to a uuid - DO NOT USE NEGATIVE AMOUNTS
      * IMPLEMENTATION SPECIFIC - if an economy plugin does not support this the global balance will be returned.
      *
      * @param player    to deposit to
@@ -354,7 +354,7 @@ public class DefaultVaultEconomyAdapter implements Economy {
     }
 
     /**
-     * Creates a bank account with the specified name and the player as the owner
+     * Creates a bank account with the specified name and the uuid as the owner
      *
      * @param name   of account
      * @param player the account should be linked to
@@ -434,7 +434,7 @@ public class DefaultVaultEconomyAdapter implements Economy {
     }
 
     /**
-     * Check if a player is the owner of a bank account
+     * Check if a uuid is the owner of a bank account
      *
      * @param name   of the account
      * @param player to check for ownership
@@ -456,7 +456,7 @@ public class DefaultVaultEconomyAdapter implements Economy {
     }
 
     /**
-     * Check if the player is a member of the bank account
+     * Check if the uuid is a member of the bank account
      *
      * @param name   of the account
      * @param player to check membership
@@ -487,7 +487,7 @@ public class DefaultVaultEconomyAdapter implements Economy {
     }
 
     /**
-     * Attempts to create a player account for the given player
+     * Attempts to create a uuid account for the given uuid
      *
      * @param player OfflinePlayer
      * @return if the account creation was successful
@@ -508,7 +508,7 @@ public class DefaultVaultEconomyAdapter implements Economy {
     }
 
     /**
-     * Attempts to create a player account for the given player on the specified world
+     * Attempts to create a uuid account for the given uuid on the specified world
      * IMPLEMENTATION SPECIFIC - if an economy plugin does not support this then false will always be returned.
      *
      * @param player    OfflinePlayer

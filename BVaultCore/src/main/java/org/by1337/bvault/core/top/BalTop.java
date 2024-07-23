@@ -1,59 +1,25 @@
 package org.by1337.bvault.core.top;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.Plugin;
-import org.by1337.blib.nbt.DefaultNbtByteBuffer;
-import org.by1337.blib.nbt.NbtType;
-import org.by1337.blib.nbt.impl.CompoundTag;
-import org.by1337.blib.nbt.impl.ListNBT;
-import org.by1337.bvault.core.db.User;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.logging.Level;
 
-public class BalTop implements Closeable, Listener {
+public class BalTop implements Closeable {
     private final Object lock = new Object();
     private final Plugin plugin;
-    private final File dataFolder;
-    @VisibleForTesting
-    final ExecutorService ioExecutor;
-    @VisibleForTesting
-    final HikariDataSource uuidToNameDb;
     private final int topSize;
+    private final ExecutorService ioExecutor;
     private final Map<String, Top> topMap = new HashMap<>();
 
     public BalTop(Plugin plugin, ExecutorService ioExecutor, int topSize) {
-        this.ioExecutor = ioExecutor;
         this.plugin = plugin;
-        dataFolder = new File(plugin.getDataFolder(), "topData");
         this.topSize = topSize;
-        dataFolder.mkdirs();
-        load();
-
-        HikariConfig hikariConfig = new HikariConfig();
-        hikariConfig.setJdbcUrl(String.format("jdbc:sqlite:%s", new File(dataFolder, "uuidToName.db").getPath()));
-        uuidToNameDb = new HikariDataSource(hikariConfig);
-        createTableIfNotExist();
-        plugin.getServer().getPluginManager().registerEvents(this, plugin);
-
+        this.ioExecutor = ioExecutor;
     }
 
     public BalTop(Plugin plugin, int topSize) {
@@ -63,26 +29,6 @@ public class BalTop implements Closeable, Listener {
                 topSize
         );
     }
-
-    void save() {
-        try {
-            File file = new File(dataFolder, "data.nbnt");
-            CompoundTag compoundTag = new CompoundTag();
-            ListNBT listNBT = new ListNBT();
-            synchronized (lock) {
-                for (Top value : topMap.values()) {
-                    listNBT.add(value.save());
-                }
-            }
-            compoundTag.putTag("tops", listNBT);
-            DefaultNbtByteBuffer buffer = new DefaultNbtByteBuffer();
-            compoundTag.write(buffer);
-            Files.write(file.toPath(), buffer.toByteArray());
-        } catch (IOException e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to save!", e);
-        }
-    }
-
 
     public void clear() {
         synchronized (lock) {
@@ -96,21 +42,6 @@ public class BalTop implements Closeable, Listener {
         }
     }
 
-    private void load() {
-        try {
-            File file = new File(dataFolder, "data.nbnt");
-            if (file.exists()) {
-                byte[] arr = Files.readAllBytes(file.toPath());
-                DefaultNbtByteBuffer buffer = new DefaultNbtByteBuffer(arr);
-                CompoundTag compoundTag = (CompoundTag) NbtType.COMPOUND.read(buffer);
-                for (Top top : compoundTag.getAsList("tops", n -> new Top(((CompoundTag) n)))) {
-                    topMap.put(top.bank, top);
-                }
-            }
-        } catch (IOException e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to load!", e);
-        }
-    }
 
     public List<TopInfo> getTop(String bank, int limit) {
         List<TopInfo> list = new ArrayList<>();
@@ -136,11 +67,11 @@ public class BalTop implements Closeable, Listener {
         return list;
     }
 
-    public void updateBalance(UUID player, double balance, String bank) {
-        ioExecutor.execute(() -> updateBalance0(player, balance, bank));
+    public void updateBalance(UUID player, double balance, String bank, String nickName) {
+        ioExecutor.execute(() -> updateBalance0(player, balance, bank, nickName));
     }
 
-    private void updateBalance0(UUID player, double balance, String bank) {
+    private void updateBalance0(UUID player, double balance, String bank, String nickName) {
         Top top;
         User oldUser;
         User user;
@@ -149,75 +80,34 @@ public class BalTop implements Closeable, Listener {
             oldUser = top.users.get(player);
         }
         if (oldUser == null) {
-            user = new User(player, getNickName(player), balance);
+            user = new User(player, nickName, balance);
         } else {
-            user = new User(player, oldUser.name, balance);
+            user = new User(player, nickName, balance);
         }
         synchronized (lock) {
             top.addUser(user);
         }
     }
 
+    public void setTop(List<TopInfo> users, String bank) {
+        synchronized (lock) {
+            Top top = new Top(bank);
+            for (TopInfo user : users) {
+                if (user != TopInfo.EMPTY) {
+                    top.addUser(new User(user.uuid(), user.nickName(), user.balance()));
+                }
+            }
+            topMap.put(bank, top);
+        }
+    }
+
+    public int getTopSize() {
+        return topSize;
+    }
+
     @Override
     public void close() {
-        save();
-        PlayerJoinEvent.getHandlerList().unregister(this);
-        synchronized (uuidToNameDb) {
-            uuidToNameDb.close();
-        }
         ioExecutor.shutdown();
-    }
-
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
-    public void onJoin(PlayerJoinEvent event) {
-        ioExecutor.execute(() -> {
-            synchronized (uuidToNameDb) {
-                try (Connection connection = uuidToNameDb.getConnection();
-                     PreparedStatement statement = connection.prepareStatement("INSERT OR REPLACE INTO users (uuid, username) VALUES (?, ?)")
-                ) {
-                    statement.setString(1, event.getPlayer().getUniqueId().toString());
-                    statement.setString(2, event.getPlayer().getName());
-                    statement.execute();
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        });
-    }
-
-    private String getNickName(UUID uuid) {
-        var player = plugin.getServer().getPlayer(uuid);
-        if (player != null) return player.getName();
-        synchronized (uuidToNameDb) {
-            try (Connection connection = uuidToNameDb.getConnection();
-                 PreparedStatement statement = connection.prepareStatement("SELECT username FROM users WHERE uuid = ?")
-            ) {
-                var result = statement.executeQuery();
-                if (result.next()) {
-                    return result.getString("username");
-                }
-            } catch (SQLException e) {
-                plugin.getLogger().log(Level.SEVERE, "Failed to get user nickname", e);
-            }
-        }
-        return "unknown";
-    }
-
-    private void createTableIfNotExist() {
-        synchronized (uuidToNameDb) {
-            try (Connection connection = uuidToNameDb.getConnection();
-                 PreparedStatement statement = connection.prepareStatement("""
-                          CREATE TABLE IF NOT EXISTS users (
-                              uuid VARCHAR(32) PRIMARY KEY,
-                              username TEXT NOT NULL
-                          );
-                         """)
-            ) {
-                statement.execute();
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        }
     }
 
     private class Top {
@@ -227,13 +117,6 @@ public class BalTop implements Closeable, Listener {
 
         public Top(String bank) {
             this.bank = bank;
-        }
-
-        public Top(CompoundTag data) {
-            bank = data.getAsString("bank");
-            for (User user : data.getAsList("users", n -> User.build(((CompoundTag) n)))) {
-                addUser(user);
-            }
         }
 
         private void addUser(BalTop.User user) {
@@ -258,17 +141,6 @@ public class BalTop implements Closeable, Listener {
                 users.remove(last.uuid);
             }
         }
-
-        private CompoundTag save() {
-            CompoundTag compoundTag = new CompoundTag();
-            compoundTag.putString("bank", bank);
-            ListNBT listNBT = new ListNBT();
-            for (User user : top) {
-                listNBT.add(user.save());
-            }
-            compoundTag.putTag("users", listNBT);
-            return compoundTag;
-        }
     }
 
     record User(UUID uuid, String name, double balance) implements Comparable<BalTop.User> {
@@ -276,21 +148,6 @@ public class BalTop implements Closeable, Listener {
         public int compareTo(@NotNull BalTop.User o) {
             var i = Double.compare(o.balance, balance);
             return i == 0 ? uuid.compareTo(o.uuid) : i;
-        }
-
-        private CompoundTag save() {
-            CompoundTag compoundTag = new CompoundTag();
-            compoundTag.putUUID("uuid", uuid);
-            compoundTag.putString("name", name);
-            compoundTag.putDouble("balance", balance);
-            return compoundTag;
-        }
-
-        public static User build(CompoundTag compoundTag) {
-            var uuid = compoundTag.getAsUUID("uuid");
-            var name = compoundTag.getAsString("name");
-            var balance = compoundTag.getAsDouble("balance");
-            return new User(uuid, name, balance);
         }
     }
 }

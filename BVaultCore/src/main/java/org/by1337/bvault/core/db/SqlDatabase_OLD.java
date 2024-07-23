@@ -1,3 +1,4 @@
+/*
 package org.by1337.bvault.core.db;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -7,8 +8,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.uuid.PlayerJoinEvent;
+import org.bukkit.event.uuid.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
 import org.by1337.bvault.core.top.BalTop;
 import org.by1337.bvault.core.util.CachedMap;
@@ -22,7 +23,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.logging.Level;
 
-public abstract class SqlDatabase implements Database, Listener {
+public abstract class SqlDatabase_OLD implements Database, Listener {
     protected final HikariDataSource dataSource;
     protected final Plugin plugin;
     protected final Object lock = new Object();
@@ -32,7 +33,7 @@ public abstract class SqlDatabase implements Database, Listener {
     protected final ExecutorService ioExecutor;
     protected final BalTop balTop;
 
-    public SqlDatabase(HikariConfig hikariConfig, Plugin plugin, BalTop balTop) {
+    public SqlDatabase_OLD(HikariConfig hikariConfig, Plugin plugin, BalTop balTop) {
         dataSource = new HikariDataSource(hikariConfig);
         this.plugin = plugin;
         this.balTop = balTop;
@@ -45,8 +46,8 @@ public abstract class SqlDatabase implements Database, Listener {
             }
         });
         createTableIfNotExist();
-        for (Player player : plugin.getServer().getOnlinePlayers()) {
-            getUser(player.getUniqueId()).whenComplete((u, t) -> {
+        for (Player uuid : plugin.getServer().getOnlinePlayers()) {
+            getUser(uuid.getUniqueId()).whenComplete((u, t) -> {
                 if (t != null) {
                     plugin.getLogger().log(Level.SEVERE, "Failed to load user", t);
                 }
@@ -198,3 +199,4 @@ public abstract class SqlDatabase implements Database, Listener {
         }
     }
 }
+*/

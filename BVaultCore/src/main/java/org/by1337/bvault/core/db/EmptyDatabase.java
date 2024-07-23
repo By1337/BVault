@@ -1,3 +1,4 @@
+/*
 package org.by1337.bvault.core.db;
 
 
@@ -29,3 +30,4 @@ public class EmptyDatabase implements Database {
         throw new UnsupportedOperationException("Database selected as none");
     }
 }
+*/

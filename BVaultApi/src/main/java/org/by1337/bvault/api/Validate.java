@@ -22,4 +22,12 @@ public class Validate {
             throw new IllegalArgumentException(message.get());
         }
     }
+    public static void checkToLarge(String string){
+        checkToLarge(string, 16);
+    }
+    public static void checkToLarge(String string, int maxLen){
+        if (string.length() > maxLen){
+            throw new IllegalArgumentException("String '" + string + "' to large!");
+        }
+    }
 }

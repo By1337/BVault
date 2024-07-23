@@ -3,26 +3,31 @@ package org.by1337.bvault.core;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.by1337.blib.command.Command;
-import org.by1337.blib.command.argument.ArgumentIntegerAllowedMath;
-import org.by1337.blib.command.argument.ArgumentPlayer;
-import org.by1337.blib.command.argument.ArgumentSetList;
-import org.by1337.blib.command.argument.ArgumentString;
+import org.by1337.blib.command.argument.*;
 import org.by1337.blib.command.requires.RequiresPermission;
 import org.by1337.bvault.api.BEconomy;
 import org.by1337.bvault.core.impl.BEconomyImpl;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 public class Commands {
 
+    private List<String> getBankList(BVaultCore core) {
+        return new ArrayList<>(core.getEconomy().getKnownBanks());
+    }
+
     public Command<CommandSender> create(BVaultCore core) {
         return new Command<CommandSender>("root")
                 .requires(new RequiresPermission<>("bvault.use"))
                 .addSubCommand(new Command<CommandSender>("clear")
                         .requires(new RequiresPermission<>("bvault.clear"))
-                        .argument(new ArgumentString<>("bank", List.of(BEconomy.DEFAULT_BANK, "all")))
+                        .argument(new BiArgument<>("bank",
+                                new ArgumentSetList<>("bank", () -> getBankList(core)),
+                                new ArgumentSetList<>("bank", List.of("all"))
+                        ))
                         .argument(new ArgumentSetList<CommandSender>("confirm", List.of("confirm")).hide())
                         .executor(((sender, args) -> {
                             String bank = (String) args.getOrThrow("bank", "use /bv clear <bank>");
@@ -32,9 +37,9 @@ public class Commands {
                                 CompletableFuture<Void> future;
                                 final long l = System.nanoTime();
                                 if (bank.equalsIgnoreCase("all")) {
-                                    future = database.clearDb();
+                                    future = database.dropBalances();
                                 } else {
-                                    future = database.clearDb(bank);
+                                    future = database.dropBalancesIn(bank);
                                 }
                                 future.whenComplete((v, t) -> {
                                     if (t != null) {
@@ -51,10 +56,10 @@ public class Commands {
                 )
                 .addSubCommand(new Command<CommandSender>("balance")
                         .requires(new RequiresPermission<>("bvault.balance"))
-                        .argument(new ArgumentPlayer<>("player"))
-                        .argument(new ArgumentString<>("bank", List.of(BEconomy.DEFAULT_BANK)))
+                        .argument(new ArgumentPlayer<>("uuid"))
+                        .argument(new ArgumentString<>("bank", () -> getBankList(core)))
                         .executor(((sender, args) -> {
-                            Player player = (Player) args.getOrThrow("player", "Use: /bv balance <player> <bank>");
+                            Player player = (Player) args.getOrThrow("uuid", "Use: /bv balance <uuid> <bank>");
                             String bank = (String) args.getOrDefault("bank", BEconomy.DEFAULT_BANK);
                             core.getEconomy().getBalance(bank, player.getUniqueId()).whenComplete((d, t) -> {
                                 if (t != null) {
@@ -76,13 +81,13 @@ public class Commands {
                 )
                 .addSubCommand(new Command<CommandSender>("give")
                         .requires(new RequiresPermission<>("bvault.give"))
-                        .argument(new ArgumentPlayer<>("player"))
-                        .argument(new ArgumentString<>("bank", List.of(BEconomy.DEFAULT_BANK)))
+                        .argument(new ArgumentPlayer<>("uuid"))
+                        .argument(new ArgumentString<>("bank", () -> getBankList(core)))
                         .argument(new ArgumentIntegerAllowedMath<>("count", List.of("100", "1k", "1kk"), 0))
                         .executor(((sender, args) -> {
-                            Player player = (Player) args.getOrThrow("player", "Use: /bv give <player> <bank> <count>");
+                            Player player = (Player) args.getOrThrow("uuid", "Use: /bv give <uuid> <bank> <count>");
                             String bank = (String) args.getOrDefault("bank", BEconomy.DEFAULT_BANK);
-                            int count = (int) args.getOrThrow("count", "Use: /bv give <player> <bank> <count>");
+                            int count = (int) args.getOrThrow("count", "Use: /bv give <uuid> <bank> <count>");
 
                             core.getEconomy().deposit(bank, player.getUniqueId(), count).whenComplete((d, t) -> {
                                 if (t != null) {
@@ -105,13 +110,13 @@ public class Commands {
                 )
                 .addSubCommand(new Command<CommandSender>("take")
                         .requires(new RequiresPermission<>("bvault.take"))
-                        .argument(new ArgumentPlayer<>("player"))
-                        .argument(new ArgumentString<>("bank", List.of(BEconomy.DEFAULT_BANK)))
+                        .argument(new ArgumentPlayer<>("uuid"))
+                        .argument(new ArgumentString<>("bank", () -> getBankList(core)))
                         .argument(new ArgumentIntegerAllowedMath<>("count", List.of("100", "1k", "1kk"), 0))
                         .executor(((sender, args) -> {
-                            Player player = (Player) args.getOrThrow("player", "Use: /bv take <player> <bank> <count>");
+                            Player player = (Player) args.getOrThrow("uuid", "Use: /bv take <uuid> <bank> <count>");
                             String bank = (String) args.getOrDefault("bank", BEconomy.DEFAULT_BANK);
-                            int count = (int) args.getOrThrow("count", "Use: /bv take <player> <bank> <count>");
+                            int count = (int) args.getOrThrow("count", "Use: /bv take <uuid> <bank> <count>");
 
                             core.getEconomy().withdraw(bank, player.getUniqueId(), count).whenComplete((d, t) -> {
                                 if (t != null) {

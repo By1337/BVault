@@ -1,6 +1,7 @@
 package org.by1337.bvault.core.db;
 
 import org.by1337.bvault.api.Validate;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -18,6 +19,7 @@ public class User {
     private final UUID uuid;
     // Reference to the database for persistence operations.
     private final Database dataBase;
+    private String name;
 
     /**
      * Creates a User with specified balances, UUID, and database reference.
@@ -26,11 +28,12 @@ public class User {
      * @param uuid     Unique identifier for the user.
      * @param dataBase Reference to the database.
      */
-    User(Map<String, Double> balances, UUID uuid, Database dataBase) {
+    User(Map<String, Double> balances, UUID uuid, Database dataBase, String name) {
         this.balances = balances;
         this.uuid = uuid;
         this.dataBase = dataBase;
         this.balancesOld = new HashMap<>(balances);
+        this.name = name;
     }
 
     /**
@@ -39,9 +42,10 @@ public class User {
      * @param uuid     Unique identifier for the user.
      * @param dataBase Reference to the database.
      */
-    User(UUID uuid, Database dataBase) {
+    User(UUID uuid, Database dataBase, String name) {
         this.uuid = uuid;
         this.dataBase = dataBase;
+        this.name = name;
         this.balances = new HashMap<>();
         this.balancesOld = new HashMap<>();
     }
@@ -125,4 +129,12 @@ public class User {
         return uuid;
     }
 
+    @NotNull
+    public String getNickName() {
+        return name == null ? "UNKNOWN" : name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 }

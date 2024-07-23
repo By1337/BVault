@@ -30,11 +30,11 @@ public class BEconomyImpl extends BEconomy {
     }
 
     /**
-     * Withdraws a specified amount of money from the player's account in the specified bank.
+     * Withdraws a specified amount of money from the uuid's account in the specified bank.
      * To be implemented by subclasses.
      *
      * @param bank   The name of the bank.
-     * @param player The UUID of the player.
+     * @param player The UUID of the uuid.
      * @param amount The amount of money to withdraw.
      * @return A CompletableFuture containing the new balance after the withdrawal.
      */
@@ -49,11 +49,11 @@ public class BEconomyImpl extends BEconomy {
     }
 
     /**
-     * Deposits a specified amount of money into the player's account in the specified bank.
+     * Deposits a specified amount of money into the uuid's account in the specified bank.
      * To be implemented by subclasses.
      *
      * @param bank   The name of the bank.
-     * @param player The UUID of the player.
+     * @param player The UUID of the uuid.
      * @param amount The amount of money to deposit.
      * @return A CompletableFuture containing the new balance after the deposit.
      */
@@ -68,11 +68,11 @@ public class BEconomyImpl extends BEconomy {
     }
 
     /**
-     * Gets the balance of the player's account in the specified bank.
+     * Gets the balance of the uuid's account in the specified bank.
      * To be implemented by subclasses.
      *
      * @param bank   The name of the bank.
-     * @param player The UUID of the player.
+     * @param player The UUID of the uuid.
      * @return A CompletableFuture containing the balance.
      */
     @Override
@@ -83,5 +83,10 @@ public class BEconomyImpl extends BEconomy {
     @Override
     protected CompletableFuture<Set<String>> getExistedBanks0(@NotNull UUID player) {
         return CompletableFuture.supplyAsync(() -> dataBase.getUser(player).join().getExistedBanks());
+    }
+
+    @Override
+    public Set<String> getKnownBanks() {
+        return dataBase.getKnownBanks();
     }
 }

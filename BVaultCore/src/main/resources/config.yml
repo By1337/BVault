@@ -15,7 +15,7 @@ dataBase:
 
 lang:
   hasMoney: 'Player %s has %s coins in bank %s.'
-  failedToGetBalance: '&cFailed to retrieve player balance :('
+  failedToGetBalance: '&cFailed to retrieve uuid balance :('
   updateBalance: "Player %s now has %s coins in bank %s."
   failed: '&cOperation failed :('
   vaultProvider: "Current economy provider is '%s'"

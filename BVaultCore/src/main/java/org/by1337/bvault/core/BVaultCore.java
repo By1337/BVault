@@ -2,6 +2,9 @@ package org.by1337.bvault.core;
 
 import com.google.common.base.Charsets;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+import com.zaxxer.hikari.pool.HikariPool;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -16,8 +19,8 @@ import org.by1337.blib.command.CommandException;
 import org.by1337.blib.configuration.YamlConfig;
 import org.by1337.bvault.api.BEconomy;
 import org.by1337.bvault.core.db.Database;
-import org.by1337.bvault.core.db.DataBaseFactory;
 import org.by1337.bvault.core.db.DisabledDatabase;
+import org.by1337.bvault.core.db.SqliteDatabase;
 import org.by1337.bvault.core.db.SwapableDatabase;
 import org.by1337.bvault.core.hook.DefaultVaultEconomyAdapter;
 import org.by1337.bvault.core.hook.PAPIHook;
@@ -25,10 +28,12 @@ import org.by1337.bvault.core.impl.BEconomyImpl;
 import org.by1337.bvault.core.top.BalTop;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -59,10 +64,25 @@ public class BVaultCore extends JavaPlugin {
         Bukkit.getServicesManager().register(Economy.class, new DefaultVaultEconomyAdapter(bEconomy), this, ServicePriority.High);
     }
 
+    private void setStaticField(Class<?> in, String field, Object value) {
+        try {
+            Field field1 = in.getDeclaredField(field);
+            field1.setAccessible(true);
+            field1.set(null, value);
+        } catch (Exception t) {
+            throw new RuntimeException(t);
+        }
+    }
+
+
     @Override
     public void onEnable() {
         balTop = new BalTop(this, config.getAsInteger("balTop.size", 100));
-        dataBase = DataBaseFactory.create(this, config.getAsYamlValue("dataBase").getAsYamlContext(), balTop);
+        // dataBase = DataBaseFactory.create(this, config.getAsYamlValue("dataBase").getAsYamlContext(), balTop);
+        HikariConfig hikariConfig = new HikariConfig();
+        hikariConfig.setJdbcUrl(String.format("jdbc:sqlite:%s", new File(getDataFolder(), "data2.db").getPath()));
+
+        dataBase = new SqliteDatabase(hikariConfig, this, balTop);
 
         swapableDatabase.setSource(dataBase);
 

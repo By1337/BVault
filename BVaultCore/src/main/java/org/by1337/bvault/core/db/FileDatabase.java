@@ -1,3 +1,4 @@
+/*
 package org.by1337.bvault.core.db;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -5,8 +6,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.uuid.PlayerJoinEvent;
+import org.bukkit.event.uuid.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
 import org.by1337.blib.nbt.DefaultNbtByteBuffer;
 import org.by1337.blib.nbt.NBT;
@@ -60,8 +61,8 @@ public class FileDatabase implements Database, Listener {
         }, ioExecutor));
 
 
-        for (Player player : plugin.getServer().getOnlinePlayers()) {
-            getUser(player.getUniqueId()).whenComplete((u, t) -> {
+        for (Player uuid : plugin.getServer().getOnlinePlayers()) {
+            getUser(uuid.getUniqueId()).whenComplete((u, t) -> {
                 if (t != null) {
                     plugin.getLogger().log(Level.SEVERE, "Failed to load user", t);
                 }
@@ -243,3 +244,4 @@ public class FileDatabase implements Database, Listener {
         ioExecutor.shutdown();
     }
 }
+*/

@@ -48,6 +48,7 @@ public abstract class BEconomy {
         Objects.requireNonNull(bank, "bank is null!");
         Validate.assertPositive(amount);
         Validate.charactersCheck(bank);
+        Validate.checkToLarge(bank, 16);
         return withdraw0(bank, player, amount);
     }
 
@@ -92,6 +93,7 @@ public abstract class BEconomy {
         Objects.requireNonNull(bank, "bank is null!");
         Validate.assertPositive(amount);
         Validate.charactersCheck(bank);
+        Validate.checkToLarge(bank, 16);
         return deposit0(bank, player, amount);
     }
 
@@ -130,6 +132,7 @@ public abstract class BEconomy {
         Objects.requireNonNull(player, "Player is null!");
         Objects.requireNonNull(bank, "bank is null!");
         Validate.charactersCheck(bank);
+        Validate.checkToLarge(bank, 16);
         return getBalance0(bank, player);
     }
 
@@ -163,4 +166,11 @@ public abstract class BEconomy {
      * @return A CompletableFuture containing the banks.
      */
     protected abstract CompletableFuture<Set<String>> getExistedBanks0(@NotNull UUID player);
+
+    /**
+     * Returns an unmodifiable set of all known banks.
+     * @return a set of known banks.
+     */
+    public abstract Set<String> getKnownBanks();
+
 }

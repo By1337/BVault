@@ -1,3 +1,4 @@
+/*
 package org.by1337.bvault.core.db;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -144,4 +145,4 @@ class FileDatabaseTest {
         }
     }
 
-}
+}*/

@@ -1,3 +1,4 @@
+/*
 package org.by1337.bvault.core.db;
 
 import org.bukkit.plugin.Plugin;
@@ -34,3 +35,4 @@ public enum DataBaseFactory {
         Database create(Plugin plugin, YamlContext cfg, BalTop balTop);
     }
 }
+*/
