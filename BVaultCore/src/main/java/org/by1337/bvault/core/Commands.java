@@ -5,11 +5,21 @@ import org.bukkit.entity.Player;
 import org.by1337.blib.command.Command;
 import org.by1337.blib.command.argument.*;
 import org.by1337.blib.command.requires.RequiresPermission;
+import org.by1337.blib.nbt.NBTToStringStyle;
+import org.by1337.blib.nbt.impl.CompoundTag;
+import org.by1337.blib.nbt.impl.ListNBT;
 import org.by1337.bvault.api.BEconomy;
 import org.by1337.bvault.core.impl.BEconomyImpl;
+import org.by1337.bvault.core.top.BalTop;
+import org.by1337.bvault.core.top.TopInfo;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -149,6 +159,37 @@ public class Commands {
                         .requires(new RequiresPermission<>("bvault.ecoName"))
                         .executor(((sender, args) -> {
                             core.getMessage().sendMsg(sender, core.getLang().get("vaultProvider"), core.getEconomy().getName());
+                        }))
+                )
+                .addSubCommand(new Command<CommandSender>("exportBalTop")
+                        .requires(new RequiresPermission<>("bvault.exportBalTop"))
+                        .executor(((sender, args) -> {
+                            CompletableFuture.runAsync(() -> {
+                                BalTop top = core.getBalTop();
+                                CompoundTag result = new CompoundTag();
+
+                                for (String knownBank : core.getEconomy().getKnownBanks()) {
+                                    ListNBT topData = new ListNBT();
+                                    for (TopInfo topInfo : top.getTop(knownBank, top.getTopSize())) {
+                                        if (topInfo != TopInfo.EMPTY) {
+                                            CompoundTag info = new CompoundTag();
+                                            info.putString("nickName", topInfo.nickName());
+                                            info.putString("uuid", String.valueOf(topInfo.uuid()));
+                                            info.putDouble("balance", topInfo.balance());
+                                            info.putInt("pos", topInfo.pos());
+                                            topData.add(info);
+                                        }
+                                    }
+                                    result.putTag(knownBank, topData);
+                                }
+                                File file = new File(core.getDataFolder(), "export-" + UUID.randomUUID() + ".json");
+                                try {
+                                    Files.writeString(file.toPath(), result.toString(NBTToStringStyle.JSON_STYLE_BEAUTIFIER));
+                                } catch (IOException e) {
+                                    throw new RuntimeException(e);
+                                }
+                                core.getMessage().sendMsg(sender, "save to %s", file.getPath());
+                            });
                         }))
                 )
                 ;
