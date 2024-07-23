@@ -1,8 +1,11 @@
 balTop:
-  size: 100
-  cashTime: 60 # in sec
-  decimalFormat: '#.##'
-  emptyPos: '----'
+  size: 100 # The size of the top list. Always make it 1 more than you need as the last position may not be accurate.
+  cashTime: 60 # How often to update the player top list?
+  format:
+    decimal-format: '#.##' # 10.33333 -> 10.33
+    thousand-separator: ' ' # 10000 -> 10 000
+    integer-separator: '.' # 100,98 -> 100.98
+  emptyPos: '----' # when the position in the top list is empty
 
 dataBase:
   type: sqlite # sqlite, mysql, none
@@ -21,3 +24,5 @@ lang:
   vaultProvider: "Current economy provider is '%s'"
   cantClear: '&cCannot clear the database!'
   successfully: '&aOperation completed in %s ms.'
+  drop-db-warn: '&c&lDo you really want to permanently delete the balances of all players in bank &f%s&c&l?'
+  drop-db-warn-all: '&c&lDo you really want to permanently delete the balances of all players in all banks?'

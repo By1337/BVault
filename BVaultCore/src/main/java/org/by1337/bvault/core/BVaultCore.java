@@ -17,6 +17,7 @@ import org.by1337.blib.chat.util.Message;
 import org.by1337.blib.command.Command;
 import org.by1337.blib.command.CommandException;
 import org.by1337.blib.configuration.YamlConfig;
+import org.by1337.blib.configuration.YamlContext;
 import org.by1337.bvault.api.BEconomy;
 import org.by1337.bvault.core.db.Database;
 import org.by1337.bvault.core.db.DisabledDatabase;
@@ -32,8 +33,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -57,9 +60,20 @@ public class BVaultCore extends JavaPlugin {
             throw new RuntimeException(e);
         }
         lang = config.getMap("lang", String.class);
+        try {
+            try (InputStreamReader in = new InputStreamReader(Objects.requireNonNull(this.getResource("config.yml"), "where did the config go?"), StandardCharsets.UTF_8)) {
+                YamlConfiguration c = new YamlConfiguration();
+                c.load(in);
+                YamlContext ctx = new YamlContext(c);
+                for (Map.Entry<String, String> entry : ctx.get("lang").getAsMap(String.class, String.class).entrySet()) {
+                    lang.computeIfAbsent(entry.getKey(), k -> entry.getValue());
+                }
+            }
+        } catch (Exception ignore) {
+        }
         swapableDatabase = new SwapableDatabase(new DisabledDatabase());
 
-        BEconomy bEconomy = new BEconomyImpl(swapableDatabase,  this);
+        BEconomy bEconomy = new BEconomyImpl(swapableDatabase, this);
         Bukkit.getServicesManager().register(BEconomy.class, bEconomy, this, ServicePriority.Lowest);
         Bukkit.getServicesManager().register(Economy.class, new DefaultVaultEconomyAdapter(bEconomy), this, ServicePriority.High);
     }

@@ -22,8 +22,8 @@ public class Commands {
     public Command<CommandSender> create(BVaultCore core) {
         return new Command<CommandSender>("root")
                 .requires(new RequiresPermission<>("bvault.use"))
-                .addSubCommand(new Command<CommandSender>("clear")
-                        .requires(new RequiresPermission<>("bvault.clear"))
+                .addSubCommand(new Command<CommandSender>("drop")
+                        .requires(new RequiresPermission<>("bvault.drop"))
                         .argument(new BiArgument<>("bank",
                                 new ArgumentSetList<>("bank", () -> getBankList(core)),
                                 new ArgumentSetList<>("bank", List.of("all"))
@@ -31,7 +31,15 @@ public class Commands {
                         .argument(new ArgumentSetList<CommandSender>("confirm", List.of("confirm")).hide())
                         .executor(((sender, args) -> {
                             String bank = (String) args.getOrThrow("bank", "use /bv clear <bank>");
-                            args.getOrThrow("confirm", "use /bv clear <bank> confirm");
+                            if (args.get("confirm") == null) {
+                                if ("all".equals(bank)) {
+                                    core.getMessage().sendMsg(sender, core.getLang().get("drop-db-warn-all"));
+                                } else {
+                                    core.getMessage().sendMsg(sender, core.getLang().get("drop-db-warn"), bank);
+                                }
+                                return;
+                            }
+
                             if (core.getEconomy() instanceof BEconomyImpl eco) {
                                 var database = eco.getDataBase();
                                 CompletableFuture<Void> future;

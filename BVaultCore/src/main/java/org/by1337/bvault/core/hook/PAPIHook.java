@@ -28,6 +28,8 @@ import java.util.logging.Level;
 public class PAPIHook extends PlaceholderExpansion {
     private final long cashTime;
     private final DecimalFormat decimalFormat;
+    private final String thousandSeparator;
+    private final String integerSeparator;
     private final String empty;
     private final BalTop balTop;
     private final Plugin plugin;
@@ -37,7 +39,9 @@ public class PAPIHook extends PlaceholderExpansion {
 
     public PAPIHook(YamlContext context, BalTop balTop, Plugin plugin) {
         cashTime = TimeUnit.SECONDS.toMillis(context.getAsInteger("cashTime", 60));
-        decimalFormat = new DecimalFormat(context.getAsString("decimalFormat", "#.##"));
+        decimalFormat = new DecimalFormat(context.getAsString("balTop.format.decimal-format", "#.##"));
+        thousandSeparator = context.getAsString("balTop.format.thousand-separator", " ");
+        integerSeparator = context.getAsString("balTop.format.integer-separator", " ");
         empty = context.getAsString("emptyPos", "----");
         topSize = context.getAsInteger("size", 100);
         this.balTop = balTop;
@@ -65,7 +69,7 @@ public class PAPIHook extends PlaceholderExpansion {
                     try {
                         String bank = args[0];
                         int pos = Integer.parseInt(args[1]);
-                        return decimalFormat.format(getTop(bank).get(pos).balance());
+                        return formatNumberWithThousandsSeparator(decimalFormat.format(getTop(bank).get(pos).balance()));
                     } catch (NumberFormatException | NullPointerException e) {
                         plugin.getLogger().log(Level.SEVERE, "", e);
                         return "use %bvault_top_balance_<bank>_<position>%! gotten " + Joiner.on("_").join(args);
@@ -81,9 +85,10 @@ public class PAPIHook extends PlaceholderExpansion {
                     } else {
                         bank = BEconomy.DEFAULT_BANK;
                     }
-                    return decimalFormat.format(
-                            getEconomy().getBalance(bank, player.getUniqueId()).join()
-                    );
+                    return formatNumberWithThousandsSeparator(
+                            decimalFormat.format(
+                                    getEconomy().getBalance(bank, player.getUniqueId()).join()
+                            ));
                 }))
         );
         placeholder.build();
@@ -109,6 +114,22 @@ public class PAPIHook extends PlaceholderExpansion {
     @Override
     public @Nullable String onPlaceholderRequest(Player player, @NotNull String params) {
         return placeholder.process(player, params.split("_"));
+    }
+
+    public String formatNumberWithThousandsSeparator(String raw) {
+        StringBuilder formatted = new StringBuilder();
+        String[] parts = raw.split("\\.");
+        String integerPart = parts[0];
+        String decimalPart = (parts.length > 1) ? integerSeparator + parts[1] : "";
+
+        char[] integerDigits = integerPart.toCharArray();
+        for (int i = integerDigits.length - 1, count = 0; i >= 0; i--, count++) {
+            if (count > 0 && count % 3 == 0) {
+                formatted.append(thousandSeparator);
+            }
+            formatted.append(integerDigits[i]);
+        }
+        return formatted.reverse() + decimalPart;
     }
 
     @Override
