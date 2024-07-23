@@ -2,6 +2,7 @@ package org.by1337.bvault.api;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -24,7 +25,7 @@ public abstract class BEconomy {
      * @param player The UUID of the player.
      * @param amount The amount of money to withdraw.
      * @return A CompletableFuture containing the new balance after the withdrawal.
-     * @throws NullPointerException if the player is null.
+     * @throws NullPointerException     if the player is null.
      * @throws IllegalArgumentException if the amount is not positive.
      */
     public CompletableFuture<Double> withdraw(@NotNull UUID player, double amount) {
@@ -40,7 +41,7 @@ public abstract class BEconomy {
      * @param player The UUID of the player.
      * @param amount The amount of money to withdraw.
      * @return A CompletableFuture containing the new balance after the withdrawal.
-     * @throws NullPointerException if the player or bank is null.
+     * @throws NullPointerException     if the player or bank is null.
      * @throws IllegalArgumentException if the amount is not positive.
      */
     public CompletableFuture<Double> withdraw(@NotNull String bank, @NotNull UUID player, double amount) {
@@ -69,7 +70,7 @@ public abstract class BEconomy {
      * @param player The UUID of the player.
      * @param amount The amount of money to deposit.
      * @return A CompletableFuture containing the new balance after the deposit.
-     * @throws NullPointerException if the player is null.
+     * @throws NullPointerException     if the player is null.
      * @throws IllegalArgumentException if the amount is not positive.
      */
     public CompletableFuture<Double> deposit(@NotNull UUID player, double amount) {
@@ -85,7 +86,7 @@ public abstract class BEconomy {
      * @param player The UUID of the player.
      * @param amount The amount of money to deposit.
      * @return A CompletableFuture containing the new balance after the deposit.
-     * @throws NullPointerException if the player or bank is null.
+     * @throws NullPointerException     if the player or bank is null.
      * @throws IllegalArgumentException if the amount is not positive.
      */
     public CompletableFuture<Double> deposit(@NotNull String bank, @NotNull UUID player, double amount) {
@@ -169,8 +170,27 @@ public abstract class BEconomy {
 
     /**
      * Returns an unmodifiable set of all known banks.
+     *
      * @return a set of known banks.
      */
     public abstract Set<String> getKnownBanks();
+
+    /**
+     * Returns the top players by balance in a specific bank.
+     * @param bank - the bank for which the top list will be created.
+     * @param limit - the limit on the number of top positions. If the limit is less than zero or exceeds the limit specified in the config, the limit will be set to the number from the config.
+     * @return a list of top users by balance.
+     */
+    public abstract List<User> getTopByBank(@NotNull String bank, int limit);
+
+    /**
+     * Returns the top players by balance in a specific bank with no limit specified.
+     * @param bank - the bank for which the top list will be created.
+     * @return a list of top users by balance.
+     */
+    public List<User> getTopByBank(String bank) {
+        return getTopByBank(bank, -1);
+    }
+
 
 }

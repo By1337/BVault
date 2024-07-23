@@ -59,21 +59,10 @@ public class BVaultCore extends JavaPlugin {
         lang = config.getMap("lang", String.class);
         swapableDatabase = new SwapableDatabase(new DisabledDatabase());
 
-        BEconomy bEconomy = new BEconomyImpl(swapableDatabase);
+        BEconomy bEconomy = new BEconomyImpl(swapableDatabase,  this);
         Bukkit.getServicesManager().register(BEconomy.class, bEconomy, this, ServicePriority.Lowest);
         Bukkit.getServicesManager().register(Economy.class, new DefaultVaultEconomyAdapter(bEconomy), this, ServicePriority.High);
     }
-
-    private void setStaticField(Class<?> in, String field, Object value) {
-        try {
-            Field field1 = in.getDeclaredField(field);
-            field1.setAccessible(true);
-            field1.set(null, value);
-        } catch (Exception t) {
-            throw new RuntimeException(t);
-        }
-    }
-
 
     @Override
     public void onEnable() {
@@ -99,6 +88,9 @@ public class BVaultCore extends JavaPlugin {
         papiHook.unregister();
     }
 
+    public BalTop getBalTop() {
+        return balTop;
+    }
 
     public Message getMessage() {
         return message;
