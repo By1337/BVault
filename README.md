@@ -74,7 +74,7 @@ To use the plugin, add the following repository and dependency to your `pom.xml`
         <dependency>
             <groupId>org.by1337.bvault.api</groupId>
             <artifactId>BVaultApi</artifactId>
-            <version>1.0</version>
+            <version>1.1</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

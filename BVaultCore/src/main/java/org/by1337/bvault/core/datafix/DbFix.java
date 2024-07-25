@@ -48,7 +48,7 @@ public class DbFix {
             context.set("decimal-format", "#.##");
             context.set("thousand-separator", " ");
             context.set("integer-separator", ".");
-            cfg.set("format", context);
+            cfg.set("balTop.format", context);
         }
     }
 
@@ -101,6 +101,7 @@ public class DbFix {
             }
         }
     }
+    @SuppressWarnings("SqlResolve")
     private void updateOld(HikariConfig config, BVaultCore core){
         try (HikariDataSource dataSource = new HikariDataSource(config)) {
             try (Connection connection = dataSource.getConnection();
