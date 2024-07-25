@@ -118,9 +118,9 @@ public class PAPIHook extends PlaceholderExpansion {
 
     public String formatNumberWithThousandsSeparator(String raw) {
         StringBuilder formatted = new StringBuilder();
-        String[] parts = raw.split("\\.");
+        String[] parts = raw.split("\\D");
         String integerPart = parts[0];
-        String decimalPart = (parts.length > 1) ? integerSeparator + parts[1] : "";
+        String decimalPart = (parts.length == 2) ? integerSeparator + parts[1] : "";
 
         char[] integerDigits = integerPart.toCharArray();
         for (int i = integerDigits.length - 1, count = 0; i >= 0; i--, count++) {

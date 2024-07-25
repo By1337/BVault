@@ -1,3 +1,5 @@
+version: 2
+
 balTop:
   size: 100 # The size of the top list. Always make it 1 more than you need as the last position may not be accurate.
   cashTime: 60 # How often to update the player top list?

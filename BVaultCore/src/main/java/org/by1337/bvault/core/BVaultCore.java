@@ -19,6 +19,7 @@ import org.by1337.blib.command.CommandException;
 import org.by1337.blib.configuration.YamlConfig;
 import org.by1337.blib.configuration.YamlContext;
 import org.by1337.bvault.api.BEconomy;
+import org.by1337.bvault.core.datafix.DbFix;
 import org.by1337.bvault.core.db.Database;
 import org.by1337.bvault.core.db.DisabledDatabase;
 import org.by1337.bvault.core.db.SqliteDatabase;
@@ -50,10 +51,13 @@ public class BVaultCore extends JavaPlugin {
     private BalTop balTop;
     private PAPIHook papiHook;
     private Map<String, String> lang;
+    private DbFix dbFix;
 
     @Override
     public void onLoad() {
+        dbFix = new DbFix();
         message = new Message(getLogger());
+        dbFix.run(this);
         try {
             config = new YamlConfig(trySave("config.yml"));
         } catch (IOException | InvalidConfigurationException e) {
@@ -92,6 +96,7 @@ public class BVaultCore extends JavaPlugin {
         command = new Commands().create(this);
         papiHook = new PAPIHook(config.getAsYamlValue("balTop").getAsYamlContext(), balTop, this);
         papiHook.register();
+        dbFix.postEnabled(this);
     }
 
     @Override
