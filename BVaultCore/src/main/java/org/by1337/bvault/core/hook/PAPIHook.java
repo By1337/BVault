@@ -3,7 +3,6 @@ package org.by1337.bvault.core.hook;
 import com.google.common.base.Joiner;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredServiceProvider;
@@ -11,7 +10,6 @@ import org.by1337.blib.configuration.YamlContext;
 import org.by1337.blib.hook.papi.Placeholder;
 import org.by1337.blib.util.Pair;
 import org.by1337.bvault.api.BEconomy;
-import org.by1337.bvault.core.BVaultCore;
 import org.by1337.bvault.core.top.BalTop;
 import org.by1337.bvault.core.top.TopInfo;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 public class PAPIHook extends PlaceholderExpansion {
+    private final DecimalFormat rawFormat = new DecimalFormat("#");
     private final long cashTime;
     private final DecimalFormat decimalFormat;
     private final String thousandSeparator;
@@ -89,6 +88,20 @@ public class PAPIHook extends PlaceholderExpansion {
                             decimalFormat.format(
                                     getEconomy().getBalance(bank, player.getUniqueId()).join()
                             ));
+                }))
+        );
+        placeholder.addSubPlaceholder(new Placeholder("raw_balance")
+                .executor(((player, args) -> {
+                    if (player == null) return "only for players";
+                    String bank;
+                    if (args.length == 1) {
+                        bank = args[0];
+                    } else {
+                        bank = BEconomy.DEFAULT_BANK;
+                    }
+                    return rawFormat.format(
+                            getEconomy().getBalance(bank, player.getUniqueId()).join()
+                    );
                 }))
         );
         placeholder.build();

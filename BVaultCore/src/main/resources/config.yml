@@ -15,13 +15,13 @@ balTop:
   emptyPos: '----' # when the position in the top list is empty
 
 dataBase:
-  type: sqlite # sqlite, mysql, none
-  host: "localhost"
-  port: 3306
-  user: "root"
-  password: "password"
-  dbName: "vault"
-  maxPoolSize: 5
+  type: sqlite # sqlite
+#  host: "localhost"
+#  port: 3306
+#  user: "root"
+#  password: "password"
+#  dbName: "vault"
+#  maxPoolSize: 5
 
 lang:
   hasMoney: 'Player %s has %s coins in bank %s.'
