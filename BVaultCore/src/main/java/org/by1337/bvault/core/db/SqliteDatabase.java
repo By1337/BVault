@@ -42,7 +42,10 @@ public class SqliteDatabase implements Database, Listener {
         this.plugin = plugin;
         this.balTop = balTop;
         ioThreadFactory = new ThreadFactoryBuilder().setNameFormat("BVault IO #%d").build();
-        ioExecutor = Executors.newCachedThreadPool(ioThreadFactory);
+        ioExecutor = new ThreadPoolExecutor(0, Runtime.getRuntime().availableProcessors() / 2,
+                60L, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(),
+                ioThreadFactory);
         cache = new ExpiringSynchronizedMap<>(5, TimeUnit.MINUTES);
         cache.onExpired((uuid, user) -> {
             if (Bukkit.getPlayer(uuid) != null) {
